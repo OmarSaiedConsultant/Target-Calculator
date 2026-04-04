@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sales Target Planner Pro | الإصدار الاستراتيجي</title>
+    <title>Sales Target Planner Pro | الإصدار الاستراتيجي المتكامل</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Cairo+Play:wght@700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -48,9 +48,9 @@
             z-index: 1000;
         }
         .sidebar-logo { padding: 25px 20px; border-bottom: 1px solid rgba(255,255,255,0.05); text-align: center; }
-        .logo-icon { width: 40px; height: 40px; background: var(--gradient-gold); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 900; color: var(--navy); margin: 0 auto 10px; }
+        .logo-icon { width: 36px; height: 36px; background: var(--gradient-gold); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 900; color: var(--navy); margin: 0 auto 10px; }
         .nav-menu { flex: 1; padding: 15px; overflow-y: auto; }
-        .nav-item { display: flex; align-items: center; gap: 10px; padding: 12px 15px; color: rgba(255,255,255,0.6); text-decoration: none; border-radius: 10px; margin-bottom: 5px; cursor: pointer; transition: 0.3s; font-size: 13px; }
+        .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; color: rgba(255,255,255,0.6); text-decoration: none; border-radius: 10px; margin-bottom: 5px; cursor: pointer; transition: 0.3s; font-size: 13px; }
         .nav-item:hover, .nav-item.active { background: rgba(201,168,76,0.15); color: var(--gold-light); }
         .nav-item.active { font-weight: 700; border-right: 4px solid var(--gold); }
         .sidebar-footer { padding: 15px; background: rgba(0,0,0,0.2); }
@@ -59,15 +59,15 @@
         .main-content { margin-right: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; }
         .header { height: var(--header-h); background: var(--white); display: flex; align-items: center; justify-content: space-between; padding: 0 30px; border-bottom: 1px solid rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100; }
 
-        .page { padding: 30px; display: none; animation: fadeIn 0.4s ease-out; }
+        .page { padding: 25px 30px; display: none; animation: fadeIn 0.4s ease-out; }
         .page.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
         /* UI Elements */
-        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px; }
-        .kpi-card { background: var(--white); border-radius: 16px; padding: 20px; box-shadow: var(--shadow); border-right: 4px solid var(--gold); position: relative; }
-        .kpi-val { font-size: 22px; font-weight: 900; color: var(--navy); font-family: 'Cairo Play', sans-serif; }
-        .kpi-label { font-size: 12px; color: var(--text-muted); font-weight: 600; margin-top: 5px; }
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 25px; }
+        .kpi-card { background: var(--white); border-radius: 16px; padding: 20px; box-shadow: var(--shadow); border-right: 4px solid var(--gold); }
+        .kpi-val { font-size: 20px; font-weight: 900; color: var(--navy); font-family: 'Cairo Play', sans-serif; }
+        .kpi-label { font-size: 11px; color: var(--text-muted); font-weight: 600; margin-top: 5px; }
         
         .card { background: var(--white); border-radius: 16px; padding: 25px; box-shadow: var(--shadow); margin-bottom: 20px; border: 1px solid rgba(0,0,0,0.03); }
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
@@ -75,22 +75,31 @@
         label { display: block; font-size: 12px; font-weight: 700; margin-bottom: 8px; color: var(--text-secondary); }
         input, select { width: 100%; padding: 12px; border: 1.5px solid #E2E8F0; border-radius: 10px; font-family: inherit; font-size: 14px; outline: none; }
         
-        .btn { padding: 12px 25px; border-radius: 10px; font-weight: 700; cursor: pointer; border: none; font-family: inherit; transition: 0.3s; display: inline-flex; align-items: center; gap: 8px; }
+        .btn { padding: 10px 20px; border-radius: 8px; font-weight: 700; cursor: pointer; border: none; font-family: inherit; transition: 0.3s; display: inline-flex; align-items: center; gap: 8px; font-size: 13px; }
         .btn-primary { background: var(--navy); color: var(--white); }
         .btn-gold { background: var(--gold); color: var(--white); }
         .btn-outline { background: transparent; border: 1.5px solid var(--gold); color: var(--navy); }
+        .btn-danger { background: #fee2e2; color: #dc2626; }
 
         .table-container { overflow-x: auto; margin-top: 15px; border-radius: 12px; border: 1px solid #edf2f7; }
         table { width: 100%; border-collapse: collapse; }
-        th { background: #F7FAFC; padding: 15px; text-align: right; font-size: 12px; color: var(--text-muted); }
-        td { padding: 15px; border-bottom: 1px solid #edf2f7; font-size: 14px; }
+        th { background: #F7FAFC; padding: 12px; text-align: right; font-size: 12px; color: var(--text-muted); }
+        td { padding: 12px; border-bottom: 1px solid #edf2f7; font-size: 13px; }
 
-        .scenario-box { display: flex; gap: 10px; margin-bottom: 20px; }
-        .scenario-btn { flex: 1; padding: 10px; border-radius: 10px; border: 1.5px solid #ddd; text-align: center; cursor: pointer; font-size: 12px; font-weight: 600; }
+        .scenario-box { display: flex; gap: 8px; margin-bottom: 20px; }
+        .scenario-btn { flex: 1; padding: 10px; border-radius: 10px; border: 1.5px solid #ddd; text-align: center; cursor: pointer; font-size: 12px; font-weight: 600; background: white; }
         .scenario-btn.active { border-color: var(--gold); background: rgba(201,168,76,0.1); color: var(--navy); }
 
-        .badge { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+        .badge { padding: 3px 8px; border-radius: 20px; font-size: 10px; font-weight: 700; }
         .badge-success { background: #C6F6D5; color: #22543D; }
+
+        .result-hero { background: var(--navy); border-radius: 16px; padding: 25px; text-align: center; margin-top: 20px; border: 2px solid var(--gold); }
+        .result-hero small { color: rgba(255,255,255,0.6); font-size: 12px; }
+        .result-hero h2 { color: var(--gold-light); font-size: 32px; font-family: 'Cairo Play'; margin-top: 5px; }
+
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; background: #eee; padding: 5px; border-radius: 10px; }
+        .tab { flex: 1; padding: 8px; text-align: center; cursor: pointer; border-radius: 8px; font-size: 12px; font-weight: 600; }
+        .tab.active { background: white; color: var(--navy); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
 
         @media (max-width: 992px) {
             .sidebar { width: 70px; }
@@ -111,13 +120,14 @@
             <div class="nav-item" data-page="forecast" onclick="showPage('forecast')">🎯 <span class="nav-text">التنبؤ الاستراتيجي</span></div>
             <div class="nav-item" data-page="months" onclick="showPage('months')">🗓️ <span class="nav-text">توزيع المواسم</span></div>
             <div class="nav-item" data-page="team" onclick="showPage('team')">👥 <span class="nav-text">إدارة الفريق</span></div>
-            <div class="nav-item" data-page="commission" onclick="showPage('commission')">💰 <span class="nav-text">الحوافز والعمولات</span></div>
+            <div class="nav-item" data-page="segments" onclick="showPage('segments')">🗂️ <span class="nav-text">التقسيمات</span></div>
+            <div class="nav-item" data-page="commission" onclick="showPage('commission')">💰 <span class="nav-text">العمولات</span></div>
             <div class="nav-item" data-page="summary" onclick="showPage('summary')">📋 <span class="nav-text">التقرير الختامي</span></div>
         </nav>
         <div class="sidebar-footer">
-            <div style="background: rgba(201,168,76,0.1); padding: 15px; border-radius: 10px; text-align: center;">
-                <div style="font-size: 10px; color: var(--gold-light);">التارجت السنوي</div>
-                <div id="side-total" style="color: white; font-weight: 900; font-size: 18px;">0</div>
+            <div style="background: rgba(201,168,76,0.1); padding: 12px; border-radius: 10px; text-align: center;">
+                <div style="font-size: 10px; color: var(--gold-light);">الإجمالي السنوي</div>
+                <div id="side-total" style="color: white; font-weight: 900; font-size: 16px;">0</div>
             </div>
         </div>
     </aside>
@@ -126,8 +136,8 @@
         <header class="header">
             <h2 id="page-title" style="font-family: 'Cairo Play';">الداشبورد</h2>
             <div style="display: flex; gap: 10px;">
-                <button class="btn btn-outline" style="padding: 8px 15px;" onclick="exportCSV()">📊 تصدير Excel</button>
-                <button class="btn btn-gold" style="padding: 8px 15px;" onclick="exportToPDF()">📥 تحميل PDF</button>
+                <button class="btn btn-outline" onclick="exportCSV()">📊 تصدير Excel</button>
+                <button class="btn btn-gold" onclick="exportToPDF()">📥 تحميل PDF</button>
             </div>
         </header>
 
@@ -157,11 +167,11 @@
             </div>
             <div class="grid-2">
                 <div class="card">
-                    <h3 style="font-size: 16px; margin-bottom: 20px;">توزيع التدفق المالي الشهري</h3>
+                    <h3 style="font-size: 14px; margin-bottom: 15px;">رؤية التدفق الشهري</h3>
                     <div style="height: 250px;"><canvas id="chartMonthly"></canvas></div>
                 </div>
                 <div class="card">
-                    <h3 style="font-size: 16px; margin-bottom: 20px;">حصة الفريق من التارجت</h3>
+                    <h3 style="font-size: 14px; margin-bottom: 15px;">حصة الفريق</h3>
                     <div style="height: 250px;"><canvas id="chartTeam"></canvas></div>
                 </div>
             </div>
@@ -170,41 +180,43 @@
         <!-- Forecast -->
         <div id="forecast" class="page">
             <div class="card">
-                <h3>تحليل السيناريوهات</h3>
-                <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 15px;">اختر طبيعة السيناريو لتعديل الأرقام تلقائياً:</p>
+                <h3>تحديد الهدف السنوي</h3>
                 <div class="scenario-box">
-                    <div class="scenario-btn active" id="scen-normal" onclick="setScenario(1, this)">واقعي (100%)</div>
-                    <div class="scenario-btn" id="scen-agg" onclick="setScenario(1.2, this)">طموح (120%)</div>
-                    <div class="scenario-btn" id="scen-cons" onclick="setScenario(0.8, this)">تحفظي (80%)</div>
+                    <div class="scenario-btn active" onclick="setScenario(1, this)">واقعي (100%)</div>
+                    <div class="scenario-btn" onclick="setScenario(1.2, this)">طموح (120%)</div>
+                    <div class="scenario-btn" onclick="setScenario(0.8, this)">تحفظي (80%)</div>
                 </div>
-                <div class="grid-2">
-                    <div class="input-group">
-                        <label>طريقة الحساب</label>
-                        <select id="method-select" onchange="state.method=this.value; renderMethodFields();">
-                            <option value="growth">بناءً على نسبة النمو</option>
-                            <option value="pipeline">بناءً على البايبلاين</option>
-                            <option value="manual">إدخال يدوي مباشر</option>
-                        </select>
-                    </div>
+                <div class="input-group">
+                    <label>طريقة بناء التارجت</label>
+                    <select id="method-select" onchange="state.method=this.value; renderMethodFields();">
+                        <option value="growth">نسبة النمو عن العام الماضي</option>
+                        <option value="pipeline">البايبلاين (قيمة الصفقات)</option>
+                        <option value="market">حصة السوق</option>
+                        <option value="manual">إدخال مباشر</option>
+                    </select>
                 </div>
                 <div id="method-fields" class="grid-2"></div>
+                <div class="result-hero">
+                    <small>إجمالي التارجت السنوي المحسوب</small>
+                    <h2 id="calc-res-target">0</h2>
+                    <small style="opacity:0.5">سيتم توزيع هذا الرقم بناءً على الأوزان المحددة في الأقسام التالية</small>
+                </div>
             </div>
         </div>
 
         <!-- Months -->
         <div id="months" class="page">
             <div class="card">
-                <h3>توزيع المواسم (Industry Presets)</h3>
-                <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 15px;">اختر قالب الموسمية الخاص بمجال عملك:</p>
+                <h3>توزيع المواسم</h3>
                 <div class="scenario-box">
                     <div class="scenario-btn" onclick="applyPreset('flat')">توزيع متساوٍ</div>
-                    <div class="scenario-btn" onclick="applyPreset('retail')">تجارة تجزئة (موسم نهاية العام)</div>
-                    <div class="scenario-btn" onclick="applyPreset('b2b')">B2B (نمو تصاعدي)</div>
+                    <div class="scenario-btn" onclick="applyPreset('retail')">Retail (مواسم)</div>
+                    <div class="scenario-btn" onclick="applyPreset('b2b')">B2B (تصاعدي)</div>
                 </div>
                 <div class="table-container">
                     <table>
                         <thead>
-                            <tr><th>الشهر</th><th>الوزن (1-10)</th><th>التارجت</th><th>الحالة</th></tr>
+                            <tr><th>الشهر</th><th>الوزن (1-10)</th><th>التارجت</th><th>النسبة</th></tr>
                         </thead>
                         <tbody id="m-table-body"></tbody>
                     </table>
@@ -216,8 +228,8 @@
         <div id="team" class="page">
             <div class="card">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                    <h3>توزيع التارجت على الفريق</h3>
-                    <button class="btn btn-primary" style="padding: 8px 15px;" onclick="addMember()">+ إضافة مندوب</button>
+                    <h3>توزيع الفريق</h3>
+                    <button class="btn btn-primary" onclick="addMember()">+ إضافة مندوب</button>
                 </div>
                 <div class="table-container">
                     <table>
@@ -230,17 +242,62 @@
             </div>
         </div>
 
+        <!-- Segments -->
+        <div id="segments" class="page">
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3>تقسيمات التارجت (منتجات/قطاعات)</h3>
+                    <button class="btn btn-primary" onclick="addSegment()">+ إضافة بند</button>
+                </div>
+                <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 10px;">وزع التارجت السنوي على الأقسام المختلفة لضمان التنوع</p>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr><th>البند / القطاع</th><th>النسبة (%)</th><th>القيمة المالية</th><th>حذف</th></tr>
+                        </thead>
+                        <tbody id="seg-table-body"></tbody>
+                    </table>
+                </div>
+                <div id="seg-total-warn" style="margin-top: 10px; font-weight: 700; font-size: 13px;"></div>
+            </div>
+        </div>
+
         <!-- Commission -->
         <div id="commission" class="page">
             <div class="card">
-                <h3>هيكلة الحوافز</h3>
-                <div class="grid-2">
-                    <div class="input-group"><label>الراتب الأساسي</label><input type="number" id="base-salary" value="5000" oninput="updateAll()"></div>
-                    <div class="input-group"><label>نسبة العمولة (%)</label><input type="number" id="comm-rate" value="3" oninput="updateAll()"></div>
+                <h3>نظام العمولات</h3>
+                <div class="tabs">
+                    <div id="tab-flat" class="tab active" onclick="setCommMode('flat')">نسبة ثابتة</div>
+                    <div id="tab-tiered" class="tab" onclick="setCommMode('tiered')">شرائح متدرجة</div>
                 </div>
-                <div class="card" style="background: var(--navy); color: white; text-align: center;">
-                    <small style="opacity: 0.7;">الدخل الإجمالي المتوقع للمندوب المثالي</small>
-                    <h2 id="total-income-val" style="color: var(--gold-light); margin: 10px 0;">0</h2>
+                
+                <div class="grid-2">
+                    <div class="input-group"><label>الراتب الأساسي المتوسط</label><input type="number" id="base-salary" value="5000" oninput="state.salary=this.value;updateAll()"></div>
+                    <div id="flat-rate-container" class="input-group">
+                        <label>نسبة العمولة (%)</label>
+                        <input type="number" id="comm-rate" value="3" oninput="state.commRate=this.value;updateAll()">
+                    </div>
+                </div>
+
+                <div id="tiered-container" style="display:none;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                        <label>شرائح العمولة (بناءً على تحقيق تارجت المندوب الشهري)</label>
+                        <button class="btn btn-primary" style="padding:5px 10px;" onclick="addTier()">+ إضافة شريحة</button>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr><th>من % تحقيق</th><th>إلى % تحقيق</th><th>نسبة العمولة (%)</th><th>حذف</th></tr>
+                            </thead>
+                            <tbody id="tiers-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="result-hero">
+                    <small>إجمالي الدخل المتوقع للمندوب (عند تحقيق 100%)</small>
+                    <h2 id="total-income-val">0</h2>
+                    <small style="opacity:0.6">يشمل الراتب + العمولة المتوقعة من تارجته الشهري</small>
                 </div>
             </div>
         </div>
@@ -248,44 +305,62 @@
         <!-- Summary -->
         <div id="summary" class="page">
             <div id="print-area">
-                <div class="card" style="border: 3px solid var(--gold); text-align: center; padding: 40px;">
-                    <h1 style="color: var(--navy); font-family: 'Cairo Play';">خطة المبيعات السنوية المعتمدة</h1>
-                    <p style="color: var(--text-muted);">تم التحليل بناءً على معطيات السوق والسيناريوهات المحددة</p>
-                    <hr style="margin: 20px 0; opacity: 0.1;">
+                <div class="card" style="border: 2px solid var(--gold); text-align: center; padding: 30px;">
+                    <h2 style="color: var(--navy); font-family: 'Cairo Play';">خطة المبيعات السنوية - تقرير نهائي</h2>
+                    <hr style="margin: 15px 0; opacity: 0.1;">
                     <div class="kpi-grid">
                         <div><small>التارجت السنوي</small><h3 id="sum-annual">0</h3></div>
                         <div><small>تارجت المندوب/شهرياً</small><h3 id="sum-rep">0</h3></div>
-                        <div><small>عدد فريق المبيعات</small><h3 id="sum-team">0</h3></div>
+                        <div><small>عدد الفريق</small><h3 id="sum-team">0</h3></div>
+                    </div>
+                </div>
+                <div class="grid-2">
+                    <div class="card">
+                        <h4>تفاصيل التقسيمات</h4>
+                        <div id="sum-seg-list" style="font-size: 13px;"></div>
+                    </div>
+                    <div class="card">
+                        <h4>نظام العمولات</h4>
+                        <div id="sum-comm-desc" style="font-size: 13px;"></div>
                     </div>
                 </div>
                 <div class="card">
-                    <h4>تفاصيل التوزيع الشهري والعمولات</h4>
-                    <div id="summary-content"></div>
+                    <h4>توزيع التارجت الشهري</h4>
+                    <div id="sum-monthly-list" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; font-size: 12px;"></div>
                 </div>
             </div>
         </div>
     </main>
 
     <script>
-        // Expert State
+        // State
         let state = {
             annual: 0,
             baseAnnual: 0,
             multiplier: 1,
             method: 'growth',
-            forecast: { last: 1000000, rate: 20, deal: 10000, deals: 10, close: 30, manual: 0 },
+            forecast: { last: 1000000, rate: 20, deal: 10000, deals: 10, close: 30, market: 5000000, share: 5, manual: 0 },
             mWeights: Array(12).fill(1),
-            team: [{ name: 'أحمد علي', weight: 1 }, { name: 'سارة محمد', weight: 1 }],
+            team: [{ name: 'مندوب 1', weight: 1 }, { name: 'مندوب 2', weight: 1 }],
+            segments: [{ name: 'المنتج الأساسي', pct: 70 }, { name: 'الخدمات الإضافية', pct: 30 }],
             salary: 5000,
-            commRate: 3
+            commMode: 'flat',
+            commRate: 3,
+            tiers: [{ from: 0, to: 80, rate: 1 }, { from: 81, to: 100, rate: 3 }, { from: 101, to: 150, rate: 5 }]
         };
 
         const MONTHS = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
         let chartM, chartT;
 
         window.onload = () => {
-            const saved = localStorage.getItem('sales_expert_v1');
+            const saved = localStorage.getItem('sales_expert_v2_full');
             if(saved) state = JSON.parse(saved);
+            
+            document.getElementById('base-salary').value = state.salary;
+            document.getElementById('comm-rate').value = state.commRate;
+            document.getElementById('method-select').value = state.method;
+            
+            setCommMode(state.commMode);
             renderMethodFields();
             updateAll();
         };
@@ -298,11 +373,12 @@
             if (navItem) navItem.classList.add('active');
             document.getElementById('page-title').innerText = navItem ? navItem.innerText : '';
             if(id === 'dashboard') setTimeout(renderCharts, 100);
+            if(id === 'summary') renderSummary();
         }
 
         function setScenario(mult, el) {
             state.multiplier = mult;
-            document.querySelectorAll('.scenario-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('#forecast .scenario-btn').forEach(b => b.classList.remove('active'));
             el.classList.add('active');
             updateAll();
         }
@@ -317,62 +393,88 @@
         function renderMethodFields() {
             const container = document.getElementById('method-fields');
             const f = state.forecast;
+            let html = '';
             if(state.method === 'growth') {
-                container.innerHTML = `
+                html = `
                     <div class="input-group"><label>مبيعات العام الماضي</label><input type="number" value="${f.last}" oninput="state.forecast.last=this.value;updateAll()"></div>
                     <div class="input-group"><label>نسبة النمو (%)</label><input type="number" value="${f.rate}" oninput="state.forecast.rate=this.value;updateAll()"></div>
                 `;
             } else if(state.method === 'pipeline') {
-                container.innerHTML = `
+                html = `
                     <div class="input-group"><label>متوسط قيمة الصفقة</label><input type="number" value="${f.deal}" oninput="state.forecast.deal=this.value;updateAll()"></div>
-                    <div class="input-group"><label>معدل الإغلاق المتوقع (%)</label><input type="number" value="${f.close}" oninput="state.forecast.close=this.value;updateAll()"></div>
+                    <div class="input-group"><label>معدل الإغلاق (%)</label><input type="number" value="${f.close}" oninput="state.forecast.close=this.value;updateAll()"></div>
+                `;
+            } else if(state.method === 'market') {
+                html = `
+                    <div class="input-group"><label>حجم السوق الكلي</label><input type="number" value="${f.market}" oninput="state.forecast.market=this.value;updateAll()"></div>
+                    <div class="input-group"><label>الحصة المستهدفة (%)</label><input type="number" value="${f.share}" oninput="state.forecast.share=this.value;updateAll()"></div>
                 `;
             } else {
-                container.innerHTML = `<div class="input-group" style="grid-column: span 2;"><label>التارجت السنوي المباشر</label><input type="number" value="${f.manual}" oninput="state.forecast.manual=this.value;updateAll()"></div>`;
+                html = `<div class="input-group" style="grid-column: span 2;"><label>التارجت السنوي المباشر</label><input type="number" value="${f.manual}" oninput="state.forecast.manual=this.value;updateAll()"></div>`;
             }
+            container.innerHTML = html;
+        }
+
+        function setCommMode(mode) {
+            state.commMode = mode;
+            document.getElementById('tab-flat').classList.toggle('active', mode === 'flat');
+            document.getElementById('tab-tiered').classList.toggle('active', mode === 'tiered');
+            document.getElementById('flat-rate-container').style.display = mode === 'flat' ? 'block' : 'none';
+            document.getElementById('tiered-container').style.display = mode === 'tiered' ? 'block' : 'none';
+            updateAll();
         }
 
         function updateAll() {
             const f = state.forecast;
             if(state.method === 'growth') state.baseAnnual = f.last * (1 + f.rate/100);
             else if(state.method === 'pipeline') state.baseAnnual = f.deal * (f.deals || 100) * (f.close/100) * 12;
+            else if(state.method === 'market') state.baseAnnual = f.market * (f.share/100);
             else state.baseAnnual = parseFloat(f.manual) || 0;
 
             state.annual = state.baseAnnual * state.multiplier;
             
             renderTables();
             updateDashboard();
-            localStorage.setItem('sales_expert_v1', JSON.stringify(state));
+            localStorage.setItem('sales_expert_v2_full', JSON.stringify(state));
         }
 
         function updateDashboard() {
             const fmt = (v) => Math.round(v).toLocaleString();
-            
-            // حساب مؤشر الثقة والصفقات
             const confidence = state.method === 'pipeline' ? Math.min(state.forecast.close * 2, 95) : 75;
             const deals = Math.round(state.annual / (state.forecast.deal || 10000));
 
-            // تحديث العناصر مع التأكد من وجودها لتجنب خطأ null
-            const mappings = {
+            const elements = {
                 'dash-annual': fmt(state.annual),
                 'dash-monthly': fmt(state.annual / 12),
                 'dash-team': state.team.length,
                 'dash-deals': deals,
-                'dash-confidence': confidence + '%'
+                'dash-confidence': confidence + '%',
+                'calc-res-target': fmt(state.annual),
+                'side-total': fmt(state.annual)
             };
 
-            for (const [id, value] of Object.entries(mappings)) {
+            for (const [id, val] of Object.entries(elements)) {
                 const el = document.getElementById(id);
-                if (el) el.innerText = value;
+                if (el) el.innerText = val;
             }
+
+            // Commission Simulation
+            const avgRepMonthly = (state.annual/12)/(state.team.length||1);
+            let commVal = 0;
+            if(state.commMode === 'flat') {
+                commVal = avgRepMonthly * (state.commRate / 100);
+            } else {
+                const tier = state.tiers.find(t => 100 >= t.from && 100 <= t.to);
+                if(tier) commVal = avgRepMonthly * (tier.rate / 100);
+            }
+            const incomeEl = document.getElementById('total-income-val');
+            if (incomeEl) incomeEl.innerText = fmt(commVal + parseFloat(state.salary)) + " EGP";
         }
 
         function renderTables() {
             const fmt = (v) => Math.round(v).toLocaleString();
-            const sideTotal = document.getElementById('side-total');
-            if (sideTotal) sideTotal.innerText = fmt(state.annual);
             
-            // Months Table
+            // Months
             const mBody = document.getElementById('m-table-body');
             const mSum = state.mWeights.reduce((a,b)=>a+parseFloat(b), 0) || 1;
             if (mBody) {
@@ -381,56 +483,93 @@
                         <td>${m}</td>
                         <td><input type="number" value="${state.mWeights[i]}" step="0.1" oninput="state.mWeights[${i}]=this.value;updateAll()"></td>
                         <td style="font-weight:bold">${fmt(state.annual * state.mWeights[i]/mSum)}</td>
-                        <td><span class="badge badge-success">نشط</span></td>
+                        <td><span class="badge" style="background:#eee">${((state.mWeights[i]/mSum)*100).toFixed(1)}%</span></td>
                     </tr>
                 `).join('');
             }
 
-            // Team Table
+            // Team
             const tBody = document.getElementById('team-table-body');
             const tSum = state.team.reduce((a,b)=>a+parseFloat(b.weight), 0) || 1;
             if (tBody) {
-                tBody.innerHTML = state.team.map((r, i) => `
+                tBody.innerHTML = state.team.map((r, i) => {
+                    const rAnn = state.annual * r.weight/tSum;
+                    return `
                     <tr>
                         <td><input type="text" value="${r.name}" oninput="state.team[${i}].name=this.value;updateAll()"></td>
                         <td><input type="number" value="${r.weight}" step="0.1" oninput="state.team[${i}].weight=this.value;updateAll()"></td>
-                        <td>${fmt(state.annual * r.weight/tSum)}</td>
-                        <td style="font-weight:bold">${fmt((state.annual * r.weight/tSum)/12)}</td>
-                        <td><button onclick="state.team.splice(${i},1);updateAll()" style="color:red; background:none; border:none; cursor:pointer;">✕</button></td>
+                        <td>${fmt(rAnn)}</td>
+                        <td style="font-weight:bold">${fmt(rAnn/12)}</td>
+                        <td><button onclick="state.team.splice(${i},1);updateAll()" class="btn btn-danger" style="padding:4px 8px;">✕</button></td>
+                    </tr>
+                `}).join('');
+            }
+
+            // Segments
+            const sBody = document.getElementById('seg-table-body');
+            const segTotal = state.segments.reduce((a,b)=>a+parseFloat(b.pct), 0);
+            if (sBody) {
+                sBody.innerHTML = state.segments.map((s, i) => `
+                    <tr>
+                        <td><input type="text" value="${s.name}" oninput="state.segments[${i}].name=this.value;updateAll()"></td>
+                        <td><input type="number" value="${s.pct}" oninput="state.segments[${i}].pct=this.value;updateAll()"></td>
+                        <td style="font-weight:bold">${fmt(state.annual * s.pct/100)}</td>
+                        <td><button onclick="state.segments.splice(${i},1);updateAll()" class="btn btn-danger" style="padding:4px 8px;">✕</button></td>
+                    </tr>
+                `).join('');
+                const warn = document.getElementById('seg-total-warn');
+                warn.innerHTML = Math.abs(segTotal-100) > 0.1 ? `<span style="color:red">⚠️ المجموع: ${segTotal}% (يجب أن يكون 100%)</span>` : `<span style="color:green">✓ المجموع 100%</span>`;
+            }
+
+            // Tiers
+            const tierBody = document.getElementById('tiers-table-body');
+            if (tierBody) {
+                tierBody.innerHTML = state.tiers.map((t, i) => `
+                    <tr>
+                        <td><input type="number" value="${t.from}" oninput="state.tiers[${i}].from=parseFloat(this.value);updateAll()"></td>
+                        <td><input type="number" value="${t.to}" oninput="state.tiers[${i}].to=parseFloat(this.value);updateAll()"></td>
+                        <td><input type="number" value="${t.rate}" oninput="state.tiers[${i}].rate=parseFloat(this.value);updateAll()"></td>
+                        <td><button onclick="state.tiers.splice(${i},1);updateAll()" class="btn btn-danger" style="padding:4px 8px;">✕</button></td>
                     </tr>
                 `).join('');
             }
+        }
 
-            // Income
-            const incomeVal = document.getElementById('total-income-val');
-            if (incomeVal) {
-                const avgMonthly = (state.annual/12)/(state.team.length||1);
-                const comm = avgMonthly * (state.commRate/100);
-                incomeVal.innerText = fmt(comm + parseFloat(state.salary));
-            }
+        function renderSummary() {
+            const fmt = (v) => Math.round(v).toLocaleString();
+            document.getElementById('sum-annual').innerText = fmt(state.annual) + " EGP";
+            document.getElementById('sum-team').innerText = state.team.length;
+            document.getElementById('sum-rep').innerText = fmt((state.annual/12)/(state.team.length||1)) + " EGP";
 
-            // Summary Text
-            const sumAnnual = document.getElementById('sum-annual');
-            const sumRep = document.getElementById('sum-rep');
-            const sumTeam = document.getElementById('sum-team');
-            if (sumAnnual) sumAnnual.innerText = fmt(state.annual);
-            if (sumRep) sumRep.innerText = fmt((state.annual/12)/(state.team.length||1));
-            if (sumTeam) sumTeam.innerText = state.team.length;
+            // Segments summary
+            document.getElementById('sum-seg-list').innerHTML = state.segments.map(s => `<div>${s.name}: <strong>${s.pct}%</strong> (${fmt(state.annual*s.pct/100)} EGP)</div>`).join('');
+
+            // Commission summary
+            let commTxt = `الراتب: ${fmt(state.salary)} EGP | `;
+            if(state.commMode === 'flat') commTxt += `العمولة: نسبة ثابتة ${state.commRate}%`;
+            else commTxt += `العمولة: شرائح متدرجة حسب التحقيق`;
+            document.getElementById('sum-comm-desc').innerText = commTxt;
+
+            // Monthly summary
+            const mSum = state.mWeights.reduce((a,b)=>a+parseFloat(b), 0) || 1;
+            document.getElementById('sum-monthly-list').innerHTML = MONTHS.map((m, i) => `
+                <div style="background:#f9f9f9; padding:5px; border-radius:5px;">
+                    <strong>${m}</strong><br>${fmt(state.annual * state.mWeights[i]/mSum)}
+                </div>
+            `).join('');
         }
 
         function renderCharts() {
             const ctxM = document.getElementById('chartMonthly');
             const ctxT = document.getElementById('chartTeam');
             if (!ctxM || !ctxT) return;
-
             if(chartM) chartM.destroy();
             if(chartT) chartT.destroy();
 
             const mSum = state.mWeights.reduce((a,b)=>a+parseFloat(b), 0) || 1;
-
             chartM = new Chart(ctxM.getContext('2d'), {
                 type: 'line',
-                data: { labels: MONTHS, datasets: [{ label: 'التدفق المالي', data: state.mWeights.map(w => state.annual * w/mSum), borderColor: '#C9A84C', tension: 0.4, fill: true, backgroundColor: 'rgba(201,168,76,0.1)' }] },
+                data: { labels: MONTHS, datasets: [{ label: 'التارجت', data: state.mWeights.map(w => state.annual * w/mSum), borderColor: '#C9A84C', tension: 0.4, fill: true, backgroundColor: 'rgba(201,168,76,0.1)' }] },
                 options: { maintainAspectRatio: false }
             });
 
@@ -442,22 +581,20 @@
         }
 
         function addMember() { state.team.push({name:'مندوب جديد', weight:1}); updateAll(); }
+        function addSegment() { state.segments.push({name:'بند جديد', pct:0}); updateAll(); }
+        function addTier() { state.tiers.push({from:0, to:0, rate:0}); updateAll(); }
 
         function exportCSV() {
-            let csv = "Month,Target\n";
+            let csv = "\uFEFF"; // BOM for Arabic
+            csv += "الشهر,التارجت المستهدف\n";
             const mSum = state.mWeights.reduce((a,b)=>a+parseFloat(b), 0) || 1;
-            MONTHS.forEach((m, i) => {
-                csv += `${m},${Math.round(state.annual * state.mWeights[i]/mSum)}\n`;
-            });
-            const blob = new Blob([csv], { type: 'text/csv' });
+            MONTHS.forEach((m, i) => { csv += `${m},${Math.round(state.annual * state.mWeights[i]/mSum)}\n`; });
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
-            a.setAttribute('hidden', '');
             a.setAttribute('href', url);
             a.setAttribute('download', 'sales_target_plan.csv');
-            document.body.appendChild(a);
             a.click();
-            document.body.removeChild(a);
         }
 
         async function exportToPDF() {
@@ -468,7 +605,7 @@
                 const element = document.getElementById('print-area');
                 const canvas = await html2canvas(element, { scale: 2 });
                 doc.addImage(canvas.toDataURL('image/png'), 'PNG', 40, 40, 515, (canvas.height * 515) / canvas.width);
-                doc.save('Sales-Strategy-Plan.pdf');
+                doc.save('Full-Sales-Strategy-Plan.pdf');
             }, 500);
         }
     </script>
