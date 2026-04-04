@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>حاسبة تارجت المبيعات</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;900&family=Cairo+Play:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root {
+  --navy: #0B1829;
+  --navy-mid: #132236;
+  --navy-light: #1E3550;
+  --gold: #C9A84C;
+  --gold-light: #E2C47A;
+  --gold-pale: #F5EDD4;
+  --white: #FFFFFF;
+  --off-white: #F8F6F1;
+  --text-primary: #0B1829;
+  --text-secondary: #4A5568;
+  --text-muted: #8A95A3;
+  --border: rgba(201,168,76,0.2);
+  --border-light: rgba(11,24,41,0.08);
+  --sidebar-w: 220px;
+  --header-h: 64px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Cairo', sans-serif;
+  background: var(--off-white);
+  color: var(--text-primary);
+  min-height: 100vh;
+  direction: rtl;
+}
+.shell { display: flex; min-height: 100vh; }
+.sidebar {
+  width: var(--sidebar-w);
+  background: var(--navy);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0; right: 0;
+  height: 100vh;
+  z-index: 100;
+  overflow: hidden;
+}
+.sidebar::before {
+  content: '';
+  position: absolute;
+  top: -60px; left: -60px;
+  width: 200px; height: 200px;
+  background: radial-gradient(circle, rgba(201,168,76,0.15) 0%, transparent 70%);
+  pointer-events: none;
+}
+.sidebar-logo {
+  padding: 24px 20px 20px;
+  border-bottom: 1px solid rgba(201,168,76,0.15);
+}
+.logo-mark {
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; font-weight: 900; color: var(--navy);
+  margin-bottom: 10px;
+}
+.logo-text { font-size: 13px; font-weight: 600; color: var(--white); line-height: 1.3; }
+.logo-sub { font-size: 10px; color: rgba(255,255,255,0.4); margin-top: 2px; }
+.nav-section { padding: 16px 12px 8px; }
+.nav-label { font-size: 9px; font-weight: 600; color: rgba(255,255,255,0.3); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 8px; padding-right: 8px; }
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all .2s;
+  margin-bottom: 2px;
+  position: relative;
+}
+.nav-item:hover { background: rgba(255,255,255,0.06); }
+.nav-item.active { background: rgba(201,168,76,0.15); }
+.nav-item.active::before {
+  content: '';
+  position: absolute;
+  right: 0; top: 50%;
+  transform: translateY(-50%);
+  width: 3px; height: 20px;
+  background: var(--gold);
+  border-radius: 2px 0 0 2px;
+}
+.nav-icon {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+  background: rgba(255,255,255,0.05);
+  flex-shrink: 0;
+}
+.nav-item.active .nav-icon { background: rgba(201,168,76,0.2); }
+.nav-text { font-size: 12px; font-weight: 500; color: rgba(255,255,255,0.6); }
+.nav-item.active .nav-text { color: var(--gold-light); font-weight: 600; }
+.nav-done { margin-right: auto; color: #4ade80; font-size: 12px; }
+.sidebar-footer {
+  margin-top: auto;
+  padding: 16px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+.target-pill {
+  background: rgba(201,168,76,0.1);
+  border: 1px solid rgba(201,168,76,0.25);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+.target-pill-label { font-size: 9px; color: rgba(255,255,255,0.4); margin-bottom: 4px; }
+.target-pill-value { font-size: 16px; font-weight: 700; color: var(--gold-light); }
+.target-pill-cur { font-size: 10px; color: rgba(255,255,255,0.4); }
+.main {
+  margin-right: var(--sidebar-w);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+.topbar {
+  height: var(--header-h);
+  background: var(--white);
+  border-bottom: 1px solid var(--border-light);
+  display: flex; align-items: center;
+  padding: 0 32px;
+  gap: 16px;
+  position: sticky; top: 0; z-index: 50;
+}
+.topbar-title { font-size: 20px; font-weight: 700; color: var(--navy); font-family: 'Cairo Play', sans-serif; }
+.topbar-sub { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+.topbar-actions { margin-right: auto; display: flex; gap: 10px; align-items: center; }
+.btn-export {
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1.5px solid var(--gold);
+  background: transparent;
+  color: var(--navy);
+  font-size: 12px; font-weight: 600;
+  cursor: pointer;
+  font-family: 'Cairo', sans-serif;
+  transition: all .2s;
+}
+.btn-export:hover { background: var(--gold); color: var(--white); }
+.page { padding: 28px 32px; flex: 1; display: none; }
+.page.active { display: block; }
+.kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+.kpi-card {
+  background: var(--white);
+  border-radius: 16px;
+  padding: 20px;
+  border: 1px solid var(--border-light);
+  position: relative;
+  overflow: hidden;
+  transition: transform .2s, box-shadow .2s;
+}
+.kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(11,24,41,0.08); }
+.kpi-card::after {
+  content: '';
+  position: absolute;
+  top: 0; right: 0;
+  width: 60px; height: 60px;
+  border-radius: 0 16px 0 60px;
+}
+.kpi-card.gold::after { background: rgba(201,168,76,0.12); }
+.kpi-card.navy::after { background: rgba(11,24,41,0.06); }
+.kpi-card.green::after { background: rgba(74,222,128,0.12); }
+.kpi-card.blue::after { background: rgba(96,165,250,0.12); }
+.kpi-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; margin-bottom: 14px; }
+.kpi-card.gold .kpi-icon { background: rgba(201,168,76,0.15); }
+.kpi-card.navy .kpi-icon { background: rgba(11,24,41,0.08); }
+.kpi-card.green .kpi-icon { background: rgba(74,222,128,0.15); }
+.kpi-card.blue .kpi-icon { background: rgba(96,165,250,0.15); }
+.kpi-label { font-size: 11px; color: var(--text-muted); font-weight: 500; margin-bottom: 6px; }
+.kpi-value { font-size: 26px; font-weight: 700; color: var(--navy); font-family: 'Cairo Play', sans-serif; line-height: 1; }
+.kpi-sub { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+.dash-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 16px; }
+.dash-card { background: var(--white); border-radius: 16px; padding: 20px; border: 1px solid var(--border-light); }
+.dash-card-title { font-size: 13px; font-weight: 700; color: var(--navy); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+.dash-card-title::before { content: ''; width: 3px; height: 14px; background: var(--gold); border-radius: 2px; display: inline-block; }
+.dash-grid2 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+.section-header { margin-bottom: 24px; }
+.section-title { font-size: 22px; font-weight: 700; color: var(--navy); font-family: 'Cairo Play', sans-serif; margin-bottom: 4px; }
+.section-sub { font-size: 13px; color: var(--text-muted); line-height: 1.6; }
+.card { background: var(--white); border-radius: 16px; padding: 24px; border: 1px solid var(--border-light); margin-bottom: 16px; }
+.card-title { font-size: 13px; font-weight: 700; color: var(--navy); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+.card-title::before { content: ''; width: 3px; height: 14px; background: var(--gold); border-radius: 2px; }
+.field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+.field label { font-size: 11px; font-weight: 600; color: var(--text-secondary); letter-spacing: 0.3px; }
+.field input, .field select {
+  padding: 10px 14px;
+  border: 1.5px solid var(--border-light);
+  border-radius: 10px;
+  background: var(--white);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-family: 'Cairo', sans-serif;
+  direction: rtl;
+  transition: border .15s, box-shadow .15s;
+  outline: none;
+}
+.field input:focus, .field select:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(201,168,76,0.12); }
+.field input[readonly] { background: var(--off-white); color: var(--text-muted); }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+.method-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 20px; }
+.method-card { padding: 14px 12px; border: 1.5px solid var(--border-light); border-radius: 12px; cursor: pointer; transition: all .2s; text-align: center; }
+.method-card:hover { border-color: var(--gold); background: rgba(201,168,76,0.04); }
+.method-card.selected { border-color: var(--gold); background: rgba(201,168,76,0.08); }
+.method-icon { font-size: 24px; margin-bottom: 8px; }
+.method-name { font-size: 12px; font-weight: 600; color: var(--navy); margin-bottom: 4px; }
+.method-desc { font-size: 10px; color: var(--text-muted); line-height: 1.4; }
+.method-card.selected .method-name { color: #8B6914; }
+.result-hero { background: var(--navy); border-radius: 16px; padding: 28px; text-align: center; margin-bottom: 16px; position: relative; overflow: hidden; }
+.result-hero::before { content: ''; position: absolute; top: -40px; left: 50%; transform: translateX(-50%); width: 200px; height: 200px; background: radial-gradient(circle, rgba(201,168,76,0.2) 0%, transparent 70%); }
+.result-hero-label { font-size: 12px; color: rgba(255,255,255,0.5); margin-bottom: 8px; }
+.result-hero-value { font-size: 42px; font-weight: 900; color: var(--gold-light); font-family: 'Cairo Play', sans-serif; line-height: 1; }
+.result-hero-cur { font-size: 14px; color: rgba(255,255,255,0.4); margin-top: 4px; }
+.tbl-wrap { border: 1px solid var(--border-light); border-radius: 12px; overflow: hidden; margin-bottom: 16px; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { background: var(--off-white); padding: 11px 16px; font-size: 11px; font-weight: 600; color: var(--text-muted); border-bottom: 1px solid var(--border-light); text-align: right; letter-spacing: 0.3px; }
+td { padding: 12px 16px; border-bottom: 1px solid var(--border-light); color: var(--text-primary); }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: rgba(201,168,76,0.03); }
+td input, td select { border: none; background: transparent; font-size: 13px; color: var(--text-primary); font-family: 'Cairo', sans-serif; width: 100%; padding: 0; outline: none; }
+td input[type=number] { text-align: center; }
+td input:focus { background: rgba(201,168,76,0.08); border-radius: 6px; padding: 3px 8px; }
+.tab-row { display: flex; gap: 4px; background: var(--off-white); border-radius: 10px; padding: 4px; margin-bottom: 20px; display: inline-flex; }
+.tab { padding: 7px 16px; border-radius: 8px; border: none; background: transparent; font-size: 12px; font-weight: 600; color: var(--text-muted); cursor: pointer; font-family: 'Cairo', sans-serif; transition: all .2s; }
+.tab.active { background: var(--white); color: var(--navy); box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+.bar-track { height: 6px; background: var(--off-white); border-radius: 3px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--gold), var(--gold-light)); transition: width .4s; }
+.badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 20px; font-size: 10px; font-weight: 600; }
+.badge-q1 { background: rgba(201,168,76,0.12); color: #7A5C10; }
+.badge-q2 { background: rgba(96,165,250,0.12); color: #1D4ED8; }
+.badge-q3 { background: rgba(74,222,128,0.12); color: #166534; }
+.badge-q4 { background: rgba(251,146,60,0.12); color: #9A3412; }
+.warn { background: #FFF8E6; border: 1px solid #F5D878; border-radius: 10px; padding: 10px 14px; font-size: 12px; color: #92610A; margin-bottom: 12px; }
+.success-msg { background: #F0FDF4; border: 1px solid #86EFAC; border-radius: 10px; padding: 10px 14px; font-size: 12px; color: #166534; margin-bottom: 12px; }
+.btn-row { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+.btn-prev, .btn-next { display: flex; align-items: center; gap: 6px; padding: 10px 22px; border-radius: 10px; border: 1.5px solid var(--border-light); background: var(--white); color: var(--text-secondary); font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'Cairo', sans-serif; transition: all .2s; }
+.btn-prev:hover { border-color: var(--navy); color: var(--navy); }
+.btn-next { background: var(--navy); color: var(--white); border-color: var(--navy); }
+.btn-next:hover { background: var(--navy-light); }
+.seg-row { display: grid; grid-template-columns: 2fr 1fr 32px; gap: 8px; align-items: end; margin-bottom: 8px; }
+.add-row-btn { width: 100%; padding: 10px; border: 1.5px dashed var(--border-light); border-radius: 10px; background: transparent; font-size: 12px; font-weight: 600; color: var(--text-muted); cursor: pointer; font-family: 'Cairo', sans-serif; margin-bottom: 16px; transition: all .2s; }
+.add-row-btn:hover { border-color: var(--gold); color: var(--navy); background: rgba(201,168,76,0.04); }
+.rm-btn { width: 32px; height: 38px; border: 1.5px solid var(--border-light); border-radius: 8px; background: transparent; color: var(--text-muted); cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; transition: all .2s; }
+.rm-btn:hover { border-color: #fc8181; color: #e53e3e; background: #FFF5F5; }
+.tier-row { display: grid; grid-template-columns: 1fr 1fr 1fr 32px; gap: 8px; align-items: end; margin-bottom: 8px; }
+.chart-wrap { position: relative; width: 100%; }
+.sum-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border-light); font-size: 13px; }
+.sum-row:last-child { border: none; font-weight: 700; font-size: 14px; padding-top: 12px; }
+.sim-result { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-top: 12px; }
+.sim-box { background: var(--off-white); border-radius: 10px; padding: 14px; text-align: center; }
+.sim-label { font-size: 10px; color: var(--text-muted); margin-bottom: 6px; }
+.sim-val { font-size: 20px; font-weight: 700; color: var(--navy); }
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(11,24,41,0.15); border-radius: 3px; }
+</style>
+</head>
+<body>
+<div class="shell">
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">ت</div>
+    <div class="logo-text">حاسبة تارجت المبيعات</div>
+    <div class="logo-sub">Sales Target Planner Pro</div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">الأقسام</div>
+    <div class="nav-item active" onclick="goPage('dashboard')" id="nav-dashboard"><div class="nav-icon">📊</div><div class="nav-text">الداشبورد</div></div>
+    <div class="nav-item" onclick="goPage('forecast')" id="nav-forecast"><div class="nav-icon">🎯</div><div class="nav-text">التنبؤ بالتارجت</div><span class="nav-done" id="done-forecast" style="display:none">✓</span></div>
+    <div class="nav-item" onclick="goPage('quarters')" id="nav-quarters"><div class="nav-icon">📅</div><div class="nav-text">الكوارترات</div><span class="nav-done" id="done-quarters" style="display:none">✓</span></div>
+    <div class="nav-item" onclick="goPage('months')" id="nav-months"><div class="nav-icon">🗓</div><div class="nav-text">الشهور</div><span class="nav-done" id="done-months" style="display:none">✓</span></div>
+    <div class="nav-item" onclick="goPage('team')" id="nav-team"><div class="nav-icon">👥</div><div class="nav-text">الفريق</div><span class="nav-done" id="done-team" style="display:none">✓</span></div>
+    <div class="nav-item" onclick="goPage('segments')" id="nav-segments"><div class="nav-icon">🗂</div><div class="nav-text">التقسيمات</div><span class="nav-done" id="done-segments" style="display:none">✓</span></div>
+    <div class="nav-item" onclick="goPage('commission')" id="nav-commission"><div class="nav-icon">💰</div><div class="nav-text">العمولات</div><span class="nav-done" id="done-commission" style="display:none">✓</span></div>
+    <div class="nav-item" onclick="goPage('summary')" id="nav-summary"><div class="nav-icon">📋</div><div class="nav-text">الملخص</div></div>
+  </div>
+  <div class="sidebar-footer">
+    <div class="target-pill">
+      <div class="target-pill-label">التارجت السنوي</div>
+      <div class="target-pill-value" id="sidebar-target">0</div>
+      <div class="target-pill-cur" id="sidebar-cur">EGP</div>
+    </div>
+  </div>
+</aside>
+ 
+<div class="main">
+  <div class="topbar">
+    <div>
+      <div class="topbar-title" id="page-title">الداشبورد</div>
+      <div class="topbar-sub" id="page-sub">نظرة شاملة على خطة المبيعات</div>
+    </div>
+    <div class="topbar-actions">
+      <button class="btn-export" onclick="exportPDF()">📥 تصدير PDF</button>
+    </div>
+  </div>
+ 
+  <!-- DASHBOARD -->
+  <div class="page active" id="page-dashboard">
+    <div class="kpi-row">
+      <div class="kpi-card gold"><div class="kpi-icon">🎯</div><div class="kpi-label">التارجت السنوي</div><div class="kpi-value" id="d-annual">0</div><div class="kpi-sub" id="d-annual-cur">EGP</div></div>
+      <div class="kpi-card navy"><div class="kpi-icon">📆</div><div class="kpi-label">التارجت الشهري</div><div class="kpi-value" id="d-monthly">0</div><div class="kpi-sub" id="d-monthly-cur">EGP / شهر</div></div>
+      <div class="kpi-card green"><div class="kpi-icon">👤</div><div class="kpi-label">تارجت المندوب / شهر</div><div class="kpi-value" id="d-per-rep">0</div><div class="kpi-sub" id="d-per-rep-sub">EGP</div></div>
+      <div class="kpi-card blue"><div class="kpi-icon">👥</div><div class="kpi-label">حجم الفريق</div><div class="kpi-value" id="d-team">0</div><div class="kpi-sub">مندوب مبيعات</div></div>
+    </div>
+    <div class="dash-grid">
+      <div class="dash-card"><div class="dash-card-title">التارجت الشهري</div><div class="chart-wrap" style="height:220px"><canvas id="chart-monthly"></canvas></div></div>
+      <div class="dash-card"><div class="dash-card-title">توزيع الكوارترات</div><div class="chart-wrap" style="height:220px"><canvas id="chart-quarters"></canvas></div></div>
+    </div>
+    <div class="dash-grid2">
+      <div class="dash-card"><div class="dash-card-title">التقسيمات</div><div class="chart-wrap" style="height:180px"><canvas id="chart-segments"></canvas></div></div>
+      <div class="dash-card"><div class="dash-card-title">توزيع الفريق</div><div id="team-dist-list" style="font-size:12px;color:var(--text-muted)">أدخل بيانات الفريق أولاً</div></div>
+      <div class="dash-card"><div class="dash-card-title">نظام العمولة</div><div id="comm-summary-box" style="font-size:12px;color:var(--text-muted)">أدخل بيانات العمولات أولاً</div></div>
+    </div>
+  </div>
+ 
+  <!-- FORECAST -->
+  <div class="page" id="page-forecast">
+    <div class="section-header">
+      <div class="section-title">التنبؤ بالتارجت السنوي</div>
+      <div class="section-sub">اختر طريقة التنبؤ المناسبة وأدخل بياناتك</div>
+    </div>
+    <div class="card">
+      <div class="card-title">إعدادات أساسية</div>
+      <div class="grid2">
+        <div class="field"><label>اسم الشركة / الفريق</label><input id="f-company" type="text" placeholder="اسم شركتك" oninput="S.company=this.value"></div>
+        <div class="field"><label>العملة</label>
+          <select id="f-currency" onchange="S.currency=this.value;document.getElementById('sidebar-cur').textContent=S.currency;document.getElementById('res-cur').textContent=S.currency">
+            <option value="EGP">جنيه مصري (EGP)</option>
+            <option value="USD">دولار أمريكي (USD)</option>
+            <option value="SAR">ريال سعودي (SAR)</option>
+            <option value="AED">درهم إماراتي (AED)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">طريقة التنبؤ</div>
+      <div class="method-grid">
+        <div class="method-card selected" onclick="selectMethod('growth',this)"><div class="method-icon">📈</div><div class="method-name">نسبة النمو</div><div class="method-desc">بناءً على مبيعات السنة الماضية</div></div>
+        <div class="method-card" onclick="selectMethod('market',this)"><div class="method-icon">🏪</div><div class="method-name">حصة السوق</div><div class="method-desc">بناءً على حجم السوق الكلي</div></div>
+        <div class="method-card" onclick="selectMethod('pipeline',this)"><div class="method-icon">🔄</div><div class="method-name">البايبلاين</div><div class="method-desc">من متوسط الصفقات التاريخية</div></div>
+        <div class="method-card" onclick="selectMethod('expense',this)"><div class="method-icon">💼</div><div class="method-name">تغطية التكاليف</div><div class="method-desc">يغطي التكاليف + هامش ربح</div></div>
+        <div class="method-card" onclick="selectMethod('manual',this)"><div class="method-icon">✏️</div><div class="method-name">إدخال مباشر</div><div class="method-desc">أدخل التارجت مباشرة</div></div>
+      </div>
+      <div id="method-inputs"></div>
+    </div>
+    <div class="result-hero">
+      <div class="result-hero-label">التارجت السنوي المحسوب</div>
+      <div class="result-hero-value" id="res-target">0</div>
+      <div class="result-hero-cur" id="res-cur">EGP</div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-next" onclick="goPage('quarters')">التالي: توزيع الكوارترات ←</button>
+    </div>
+  </div>
+ 
+  <!-- QUARTERS -->
+  <div class="page" id="page-quarters">
+    <div class="section-header"><div class="section-title">توزيع التارجت على الكوارترات</div></div>
+    <div class="kpi-row" style="grid-template-columns:repeat(4,1fr);margin-bottom:16px" id="q-kpis"></div>
+    <div class="card">
+      <div class="card-title">طريقة التوزيع</div>
+      <div class="tab-row">
+        <button class="tab active" onclick="setQSplit('equal',this)">توزيع متساوٍ (25% × 4)</button>
+        <button class="tab" onclick="setQSplit('weighted',this)">أوزان مخصصة</button>
+      </div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>الكوارتر</th><th>الشهور</th><th style="text-align:center">الوزن %</th><th>التارجت</th><th>النسبة</th></tr></thead>
+        <tbody id="q-tbody"></tbody>
+      </table></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-prev" onclick="goPage('forecast')">→ السابق</button>
+      <button class="btn-next" onclick="goPage('months')">التالي: الشهور ←</button>
+    </div>
+  </div>
+ 
+  <!-- MONTHS -->
+  <div class="page" id="page-months">
+    <div class="section-header"><div class="section-title">توزيع التارجت على الشهور</div></div>
+    <div class="card">
+      <div class="card-title">الأوزان الشهرية</div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>الشهر</th><th>الكوارتر</th><th style="text-align:center">الوزن النسبي</th><th>التارجت الشهري</th><th>من السنة %</th><th>من الكوارتر %</th></tr></thead>
+        <tbody id="m-tbody"></tbody>
+      </table></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-prev" onclick="goPage('quarters')">→ السابق</button>
+      <button class="btn-next" onclick="goPage('team')">التالي: الفريق ←</button>
+    </div>
+  </div>
+ 
+  <!-- TEAM -->
+  <div class="page" id="page-team">
+    <div class="section-header"><div class="section-title">توزيع التارجت على الفريق</div></div>
+    <div class="card">
+      <div class="card-title">إعدادات الفريق</div>
+      <div class="grid2">
+        <div class="field"><label>عدد أفراد الفريق</label><input id="t-count" type="number" value="3" min="1" max="50" oninput="setTeamCount(this.value)"></div>
+        <div class="field"><label>طريقة التوزيع</label>
+          <select onchange="S.teamSplit=this.value;calcTeam();renderTeamTable()">
+            <option value="equal">توزيع متساوٍ</option>
+            <option value="weighted">أوزان مخصصة</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">أفراد الفريق</div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>اسم المندوب</th><th style="text-align:center">الوزن</th><th>التارجت السنوي</th><th>التارجت الشهري</th><th>التارجت اليومي</th></tr></thead>
+        <tbody id="team-tbody"></tbody>
+      </table></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-prev" onclick="goPage('months')">→ السابق</button>
+      <button class="btn-next" onclick="goPage('segments')">التالي: التقسيمات ←</button>
+    </div>
+  </div>
+ 
+  <!-- SEGMENTS -->
+  <div class="page" id="page-segments">
+    <div class="section-header"><div class="section-title">تقسيم التارجت حسب الأبعاد</div></div>
+    <div class="card">
+      <div class="card-title">نوع التقسيم</div>
+      <div class="tab-row">
+        <button class="tab active" onclick="setSegType('product',this)">المنتجات</button>
+        <button class="tab" onclick="setSegType('region',this)">المناطق</button>
+        <button class="tab" onclick="setSegType('customer',this)">العملاء</button>
+        <button class="tab" onclick="setSegType('channel',this)">قنوات البيع</button>
+        <button class="tab" onclick="setSegType('custom',this)">مخصص</button>
+      </div>
+      <div id="seg-inputs"></div>
+      <button class="add-row-btn" onclick="addSeg()">+ إضافة عنصر</button>
+      <div id="seg-warn"></div>
+      <div class="tbl-wrap" id="seg-table-wrap" style="display:none"><table>
+        <thead><tr><th>العنصر</th><th style="text-align:center">النسبة %</th><th>التارجت</th><th>من السنة</th></tr></thead>
+        <tbody id="seg-tbody"></tbody>
+      </table></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-prev" onclick="goPage('team')">→ السابق</button>
+      <button class="btn-next" onclick="goPage('commission')">التالي: العمولات ←</button>
+    </div>
+  </div>
+ 
+  <!-- COMMISSION -->
+  <div class="page" id="page-commission">
+    <div class="section-header"><div class="section-title">نظام العمولات والحوافز</div></div>
+    <div class="card">
+      <div class="card-title">نوع النظام</div>
+      <div class="tab-row">
+        <button class="tab active" onclick="setCS('tiered',this)">شرائح متدرجة</button>
+        <button class="tab" onclick="setCS('flat',this)">نسبة ثابتة</button>
+        <button class="tab" onclick="setCS('bonus',this)">بونص إنجاز</button>
+      </div>
+      <div id="comm-inputs"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">حاسبة العمولة التجريبية</div>
+      <div class="grid2">
+        <div class="field"><label>تارجت المندوب الشهري</label><input id="sim-tgt" type="number" placeholder="0" oninput="calcSimComm()"></div>
+        <div class="field"><label>مبيعاته الفعلية</label><input id="sim-act" type="number" placeholder="0" oninput="calcSimComm()"></div>
+      </div>
+      <div class="sim-result" id="sim-result"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-prev" onclick="goPage('segments')">→ السابق</button>
+      <button class="btn-next" onclick="goPage('summary')">التالي: الملخص ←</button>
+    </div>
+  </div>
+ 
+  <!-- SUMMARY -->
+  <div class="page" id="page-summary">
+    <div class="section-header">
+      <div class="section-title">الملخص الكامل لخطة التارجت</div>
+      <div class="section-sub" id="sum-sub">خطة مبيعات متكاملة</div>
+    </div>
+    <div id="summary-content"></div>
+    <div class="btn-row">
+      <button class="btn-prev" onclick="goPage('commission')">→ السابق</button>
+      <button class="btn-next" onclick="exportPDF()">📥 تصدير PDF</button>
+    </div>
+  </div>
+ 
+</div>
+</div>
+ 
+<script>
+const S = {
+  company: '', currency: 'EGP',
+  method: 'growth', fi: {}, annual: 0,
+  qSplit: 'equal', qWeights: [25,25,25,25], quarters: [0,0,0,0],
+  mWeights: [1,1,1,1,1,1,1,1,1,1,1,1], months: Array(12).fill(0),
+  teamCount: 3, teamSplit: 'equal',
+  members: [{name:'مندوب 1',weight:1},{name:'مندوب 2',weight:1},{name:'مندوب 3',weight:1}],
+  segType: 'product', segs: [],
+  csType: 'tiered',
+  tiers: [{from:0,to:80,rate:3},{from:80,to:100,rate:5},{from:100,to:null,rate:8}],
+  flatRate: 5, bonusPct: 100, bonusVal: 10, bonusType: 'pct',
+};
+ 
+const MONTHS = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+const QUARTERS = ['Q1','Q2','Q3','Q4'];
+const QMONTHS = ['يناير-مارس','أبريل-يونيو','يوليو-سبتمبر','أكتوبر-ديسمبر'];
+const QIDX = [[0,1,2],[3,4,5],[6,7,8],[9,10,11]];
+const QBADGE = ['badge-q1','badge-q2','badge-q3','badge-q4'];
+const COLORS = ['#C9A84C','#378ADD','#4ade80','#fb923c','#a78bfa','#f472b6'];
+let chartMonthly=null, chartQuarters=null, chartSegments=null;
+ 
+function fmt(n){ return Math.round(n).toLocaleString('ar-EG'); }
+function fmtD(n){ return (Math.round(n*10)/10).toLocaleString('ar-EG'); }
+ 
+function goPage(id) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  document.getElementById('nav-'+id)?.classList.add('active');
+  const titles = {
+    dashboard:['الداشبورد','نظرة شاملة على خطة المبيعات'],
+    forecast:['التنبؤ بالتارجت','حدد التارجت السنوي بطريقة علمية'],
+    quarters:['توزيع الكوارترات','وزع التارجت على الأرباع السنوية'],
+    months:['توزيع الشهور','توزيع دقيق على 12 شهراً'],
+    team:['الفريق','توزيع التارجت على أفراد المبيعات'],
+    segments:['التقسيمات','تحليل التارجت حسب الأبعاد'],
+    commission:['العمولات والحوافز','صمم نظام الحوافز'],
+    summary:['الملخص الكامل','تقرير خطة المبيعات'],
+  };
+  if(titles[id]){
+    document.getElementById('page-title').textContent = titles[id][0];
+    document.getElementById('page-sub').textContent = titles[id][1];
+  }
+  if(id==='quarters') renderQPage();
+  if(id==='months') renderMPage();
+  if(id==='team') renderTeamTable();
+  if(id==='segments') renderSegPage();
+  if(id==='commission') renderCommPage();
+  if(id==='summary') renderSummary();
+  if(id==='dashboard') updateDashboard();
+}
+ 
+// ✅ الدالة الجديدة - بتحسب وبتعرض بس من غير ما تمس الـ inputs
+function calcAndShow() {
+  calcTarget();
+  calcQuarters();
+  calcMonths();
+  calcTeam();
+  document.getElementById('res-target').textContent = fmt(S.annual);
+  document.getElementById('res-cur').textContent = S.currency;
+  document.getElementById('sidebar-target').textContent = fmt(S.annual);
+  document.getElementById('sidebar-cur').textContent = S.currency;
+  if(S.annual>0) document.getElementById('done-forecast').style.display='';
+  updateDashboardKPIs();
+}
+ 
+const methodDefs = {
+  growth: `<div class="grid2">
+    <div class="field"><label>مبيعات السنة الماضية</label><input type="number" placeholder="0" id="fi-last" oninput="S.fi.last=+this.value;calcAndShow()"></div>
+    <div class="field"><label>نسبة النمو المستهدفة %</label><input type="number" placeholder="20" id="fi-rate" oninput="S.fi.rate=+this.value;calcAndShow()"></div>
+  </div>`,
+  market: `<div class="grid2">
+    <div class="field"><label>حجم السوق الكلي</label><input type="number" placeholder="0" id="fi-market" oninput="S.fi.market=+this.value;calcAndShow()"></div>
+    <div class="field"><label>الحصة السوقية المستهدفة %</label><input type="number" placeholder="5" id="fi-share" oninput="S.fi.share=+this.value;calcAndShow()"></div>
+  </div>`,
+  pipeline: `<div class="grid3">
+    <div class="field"><label>متوسط قيمة الصفقة</label><input type="number" placeholder="0" id="fi-deal" oninput="S.fi.deal=+this.value;calcAndShow()"></div>
+    <div class="field"><label>صفقات متوقعة / شهر</label><input type="number" placeholder="10" id="fi-deals" oninput="S.fi.deals=+this.value;calcAndShow()"></div>
+    <div class="field"><label>معدل الإغلاق %</label><input type="number" placeholder="30" id="fi-close" oninput="S.fi.close=+this.value;calcAndShow()"></div>
+  </div>`,
+  expense: `<div class="grid3">
+    <div class="field"><label>إجمالي التكاليف السنوية</label><input type="number" placeholder="0" id="fi-cost" oninput="S.fi.cost=+this.value;calcAndShow()"></div>
+    <div class="field"><label>هامش الربح المستهدف %</label><input type="number" placeholder="25" id="fi-margin" oninput="S.fi.margin=+this.value;calcAndShow()"></div>
+    <div class="field"><label>عامل الأمان %</label><input type="number" placeholder="0" value="0" id="fi-buffer" oninput="S.fi.buffer=+this.value;calcAndShow()"></div>
+  </div>`,
+  manual: `<div class="field"><label>التارجت السنوي المباشر</label><input type="number" placeholder="0" id="fi-manual" oninput="S.fi.manual=+this.value;calcAndShow()"></div>`,
+};
+ 
+function selectMethod(id, el) {
+  S.method = id; S.fi = {};
+  document.querySelectorAll('.method-card').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+  renderMethodInputs();
+}
+function renderMethodInputs() {
+  const el = document.getElementById('method-inputs');
+  if(!el) return;
+  el.innerHTML = methodDefs[S.method];
+}
+ 
+function calcTarget() {
+  const fi=S.fi, m=S.method;
+  let t=0;
+  if(m==='growth'&&fi.last&&fi.rate) t=fi.last*(1+fi.rate/100);
+  if(m==='market'&&fi.market&&fi.share) t=fi.market*fi.share/100;
+  if(m==='pipeline'&&fi.deal&&fi.deals&&fi.close) t=fi.deal*fi.deals*(fi.close/100)*12;
+  if(m==='expense'&&fi.cost&&fi.margin) t=(fi.cost/(1-fi.margin/100))*(1+(fi.buffer||0)/100);
+  if(m==='manual'&&fi.manual) t=+fi.manual;
+  S.annual = Math.max(0, t);
+}
+ 
+function setQSplit(v, btn) {
+  S.qSplit=v;
+  if(v==='equal') S.qWeights=[25,25,25,25];
+  document.querySelectorAll('#page-quarters .tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  calcQuarters(); renderQPage();
+}
+function calcQuarters() {
+  const total=S.annual;
+  if(S.qSplit==='equal') { S.quarters=[total/4,total/4,total/4,total/4]; S.qWeights=[25,25,25,25]; }
+  else { const ws=S.qWeights, sum=ws.reduce((a,b)=>a+b,0)||100; S.quarters=ws.map(w=>total*w/sum); }
+  if(S.annual>0) document.getElementById('done-quarters').style.display='';
+}
+function renderQPage() {
+  const kpis=document.getElementById('q-kpis');
+  const tbody=document.getElementById('q-tbody');
+  if(!kpis||!tbody) return;
+  calcQuarters();
+  const colors=['#C9A84C','#378ADD','#4ade80','#fb923c'];
+  kpis.innerHTML=QUARTERS.map((q,i)=>`<div class="kpi-card" style="border-top:3px solid ${colors[i]}"><div class="kpi-label">${q}</div><div class="kpi-value" style="font-size:18px">${fmt(S.quarters[i])}</div><div class="kpi-sub">${S.currency}</div></div>`).join('');
+  tbody.innerHTML=QUARTERS.map((q,i)=>`<tr>
+    <td><span class="badge ${QBADGE[i]}">${q}</span></td>
+    <td style="color:var(--text-muted);font-size:12px">${QMONTHS[i]}</td>
+    <td style="text-align:center"><input type="number" value="${S.qWeights[i]}" ${S.qSplit==='equal'?'readonly':''} onchange="S.qWeights[${i}]=+this.value;calcQuarters();calcMonths();renderQPage();renderMPage()" style="width:70px;border:${S.qSplit==='equal'?'none':'1px solid var(--border-light)'};border-radius:6px;padding:4px 8px"></td>
+    <td style="font-weight:600">${fmt(S.quarters[i])} <span style="font-size:11px;color:var(--text-muted)">${S.currency}</span></td>
+    <td><div style="display:flex;align-items:center;gap:8px"><div class="bar-track" style="flex:1"><div class="bar-fill" style="width:${S.annual?Math.round(S.quarters[i]/S.annual*100):0}%;background:${colors[i]}"></div></div><span style="font-size:11px;color:var(--text-muted);width:30px">${S.annual?Math.round(S.quarters[i]/S.annual*100):0}%</span></div></td>
+  </tr>`).join('');
+}
+ 
+function calcMonths() {
+  for(let q=0;q<4;q++){
+    const qIdx=QIDX[q], ws=qIdx.map(i=>S.mWeights[i]);
+    const wSum=ws.reduce((a,b)=>a+b,0)||1;
+    qIdx.forEach((mi,j)=>{ S.months[mi]=S.quarters[q]*ws[j]/wSum; });
+  }
+  if(S.annual>0) document.getElementById('done-months').style.display='';
+}
+function renderMPage() {
+  const tbody=document.getElementById('m-tbody');
+  if(!tbody) return;
+  calcMonths();
+  const maxM=Math.max(...S.months)||1;
+  const qColors=['#C9A84C','#378ADD','#4ade80','#fb923c'];
+  tbody.innerHTML=MONTHS.map((name,i)=>{
+    const q=Math.floor(i/3);
+    const qPct=S.quarters[q]?Math.round(S.months[i]/S.quarters[q]*100):0;
+    const aPct=S.annual?Math.round(S.months[i]/S.annual*100):0;
+    return `<tr>
+      <td>${name}</td><td><span class="badge ${QBADGE[q]}">${QUARTERS[q]}</span></td>
+      <td style="text-align:center"><input type="number" value="${S.mWeights[i]}" min="0.1" step="0.1" onchange="S.mWeights[${i}]=Math.max(0.1,+this.value||1);calcMonths();renderMPage()" style="width:70px;border:1px solid var(--border-light);border-radius:6px;padding:4px 8px"></td>
+      <td style="font-weight:600">${fmt(S.months[i])} <span style="font-size:11px;color:var(--text-muted)">${S.currency}</span></td>
+      <td style="font-size:11px;color:var(--text-muted)">${aPct}%</td>
+      <td><div style="display:flex;align-items:center;gap:6px"><div class="bar-track" style="flex:1"><div class="bar-fill" style="width:${Math.round(S.months[i]/maxM*100)}%;background:${qColors[q]}"></div></div><span style="font-size:11px;color:var(--text-muted);width:28px">${qPct}%</span></div></td>
+    </tr>`;
+  }).join('');
+}
+ 
+function setTeamCount(v) {
+  const n=Math.max(1,Math.min(50,+v||1));
+  S.teamCount=n;
+  while(S.members.length<n) S.members.push({name:`مندوب ${S.members.length+1}`,weight:1});
+  S.members=S.members.slice(0,n);
+  calcTeam(); renderTeamTable();
+}
+function calcTeam() {
+  const ws=S.members.map(m=>S.teamSplit==='equal'?1:+m.weight||1);
+  const totalW=ws.reduce((a,b)=>a+b,0)||1;
+  S.members.forEach((m,i)=>{ m._target=S.annual*ws[i]/totalW; });
+  if(S.teamCount>0&&S.annual>0) document.getElementById('done-team').style.display='';
+}
+function renderTeamTable() {
+  const tbody=document.getElementById('team-tbody');
+  if(!tbody) return;
+  calcTeam();
+  tbody.innerHTML=S.members.map((m,i)=>`<tr>
+    <td><input type="text" value="${m.name}" oninput="S.members[${i}].name=this.value"></td>
+    <td style="text-align:center"><input type="number" value="${m.weight}" min="0.1" step="0.1" ${S.teamSplit==='equal'?'readonly':''} onchange="S.members[${i}].weight=+this.value||1;calcTeam();renderTeamTable()"></td>
+    <td style="font-weight:600">${fmt(m._target)} <span style="font-size:11px;color:var(--text-muted)">${S.currency}</span></td>
+    <td>${fmt(m._target/12)} <span style="font-size:11px;color:var(--text-muted)">${S.currency}</span></td>
+    <td style="font-size:12px;color:var(--text-muted)">${fmt(m._target/264)}</td>
+  </tr>`).join('');
+}
+ 
+function setSegType(v,btn) {
+  S.segType=v;
+  document.querySelectorAll('#page-segments .tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+}
+function addSeg() { S.segs.push({name:'',pct:0}); renderSegPage(); }
+function removeSeg(i) { S.segs.splice(i,1); renderSegPage(); }
+function renderSegPage() {
+  const el=document.getElementById('seg-inputs');
+  if(!el) return;
+  el.innerHTML=S.segs.map((s,i)=>`<div class="seg-row">
+    <div class="field" style="margin:0"><input type="text" value="${s.name}" placeholder="الاسم" oninput="S.segs[${i}].name=this.value;renderSegTable()"></div>
+    <div class="field" style="margin:0"><input type="number" value="${s.pct||''}" placeholder="النسبة %" min="0" max="100" step="0.1" onchange="S.segs[${i}].pct=+this.value;renderSegTable()"></div>
+    <button class="rm-btn" onclick="removeSeg(${i})">×</button>
+  </div>`).join('');
+  renderSegTable();
+  const total=S.segs.reduce((a,s)=>a+s.pct,0);
+  if(S.segs.length>0&&Math.round(total)===100) document.getElementById('done-segments').style.display='';
+}
+function renderSegTable() {
+  const wrap=document.getElementById('seg-table-wrap');
+  const tbody=document.getElementById('seg-tbody');
+  const warn=document.getElementById('seg-warn');
+  if(!wrap||!tbody) return;
+  const total=S.segs.reduce((a,s)=>a+s.pct,0);
+  if(S.segs.length===0){wrap.style.display='none';warn.innerHTML='';return;}
+  wrap.style.display='';
+  warn.innerHTML=Math.round(total)!==100?`<div class="warn">مجموع النسب: ${fmtD(total)}% — المطلوب 100%</div>`:`<div class="success-msg">مجموع النسب 100% ✓</div>`;
+  tbody.innerHTML=S.segs.map(s=>`<tr>
+    <td>${s.name||'—'}</td>
+    <td style="text-align:center">${fmtD(s.pct)}%</td>
+    <td style="font-weight:600">${fmt(S.annual*s.pct/100)} ${S.currency}</td>
+    <td><div class="bar-track"><div class="bar-fill" style="width:${s.pct}%"></div></div></td>
+  </tr>`).join('');
+}
+ 
+function setCS(v,btn) {
+  S.csType=v;
+  document.querySelectorAll('#page-commission .tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  renderCommPage();
+}
+function renderCommPage() {
+  const el=document.getElementById('comm-inputs');
+  if(!el) return;
+  if(S.csType==='tiered') {
+    el.innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr 1fr 32px;gap:8px;margin-bottom:6px">
+      <span style="font-size:11px;color:var(--text-muted);font-weight:600">من % تحقيق</span>
+      <span style="font-size:11px;color:var(--text-muted);font-weight:600">إلى % تحقيق</span>
+      <span style="font-size:11px;color:var(--text-muted);font-weight:600">نسبة العمولة %</span><span></span>
+    </div>`+S.tiers.map((t,i)=>`<div class="tier-row">
+      <div class="field" style="margin:0"><input type="number" value="${t.from}" onchange="S.tiers[${i}].from=+this.value"></div>
+      <div class="field" style="margin:0"><input type="number" value="${t.to||''}" placeholder="∞" onchange="S.tiers[${i}].to=this.value?+this.value:null"></div>
+      <div class="field" style="margin:0"><input type="number" value="${t.rate}" step="0.5" onchange="S.tiers[${i}].rate=+this.value;calcSimComm()"></div>
+      <button class="rm-btn" onclick="S.tiers.splice(${i},1);renderCommPage()">×</button>
+    </div>`).join('')+`<button class="add-row-btn" onclick="S.tiers.push({from:0,to:null,rate:5});renderCommPage()">+ شريحة جديدة</button>`;
+  } else if(S.csType==='flat') {
+    el.innerHTML=`<div class="field"><label>نسبة العمولة الثابتة %</label><input type="number" value="${S.flatRate}" step="0.5" onchange="S.flatRate=+this.value;calcSimComm()" style="max-width:220px"></div>`;
+  } else {
+    el.innerHTML=`<div class="grid3">
+      <div class="field"><label>نسبة الإنجاز للبونص %</label><input type="number" value="${S.bonusPct}" onchange="S.bonusPct=+this.value"></div>
+      <div class="field"><label>قيمة البونص</label><input type="number" value="${S.bonusVal}" onchange="S.bonusVal=+this.value"></div>
+      <div class="field"><label>نوع القيمة</label><select onchange="S.bonusType=this.value">
+        <option value="pct" ${S.bonusType==='pct'?'selected':''}>% من التارجت</option>
+        <option value="fixed" ${S.bonusType==='fixed'?'selected':''}>مبلغ ثابت</option>
+      </select></div>
+    </div>
+    <div class="success-msg">يستحق المندوب البونص عند تحقيق ${S.bonusPct}% أو أكثر</div>`;
+  }
+  document.getElementById('done-commission').style.display='';
+  calcSimComm();
+}
+function calcSimComm() {
+  const tgt=+document.getElementById('sim-tgt')?.value||0;
+  const act=+document.getElementById('sim-act')?.value||0;
+  const pct=tgt?act/tgt*100:0;
+  let comm=0;
+  if(S.csType==='tiered') { const tier=S.tiers.find(t=>pct>=t.from&&(t.to===null||pct<t.to)); comm=tier?act*tier.rate/100:0; }
+  else if(S.csType==='flat') { comm=act*S.flatRate/100; }
+  else { if(pct>=S.bonusPct) comm=S.bonusType==='pct'?tgt*S.bonusVal/100:S.bonusVal; }
+  const el=document.getElementById('sim-result');
+  if(el) el.innerHTML=`
+    <div class="sim-box"><div class="sim-label">نسبة الإنجاز</div><div class="sim-val">${Math.round(pct)}%</div></div>
+    <div class="sim-box"><div class="sim-label">العمولة المستحقة</div><div class="sim-val">${fmt(comm)}</div></div>
+    <div class="sim-box"><div class="sim-label">الإجمالي (راتب فرضي 5000)</div><div class="sim-val">${fmt(5000+comm)}</div></div>`;
+}
+ 
+function updateDashboardKPIs() {
+  const el=document.getElementById('d-annual');
+  if(!el) return;
+  document.getElementById('d-annual').textContent=fmt(S.annual);
+  document.getElementById('d-annual-cur').textContent=S.currency;
+  document.getElementById('d-monthly').textContent=fmt(S.annual/12);
+  document.getElementById('d-monthly-cur').textContent=S.currency+' / شهر';
+  document.getElementById('d-per-rep').textContent=fmt(S.annual/12/Math.max(S.teamCount,1));
+  document.getElementById('d-per-rep-sub').textContent=S.currency+' / شهر / مندوب';
+  document.getElementById('d-team').textContent=S.teamCount;
+}
+ 
+function updateDashboard() {
+  updateDashboardKPIs();
+  renderMonthlyChart();
+  renderQuartersChart();
+  renderSegmentsChart();
+  renderTeamDist();
+  renderCommSummary();
+}
+ 
+function renderMonthlyChart() {
+  const ctx=document.getElementById('chart-monthly');
+  if(!ctx) return;
+  if(chartMonthly) chartMonthly.destroy();
+  chartMonthly=new Chart(ctx,{type:'bar',data:{labels:MONTHS,datasets:[{data:S.months.map(m=>Math.round(m)),backgroundColor:QIDX.flatMap((qi,q)=>qi.map(()=>['rgba(201,168,76,0.7)','rgba(55,138,221,0.7)','rgba(74,222,128,0.7)','rgba(251,146,60,0.7)'][q])),borderRadius:5,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:(c)=>fmt(c.raw)+' '+S.currency}}},scales:{x:{grid:{display:false},ticks:{font:{family:'Cairo',size:10},color:'#8A95A3',autoSkip:false,maxRotation:45}},y:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{font:{family:'Cairo',size:10},color:'#8A95A3',callback:(v)=>fmt(v)}}}}});
+}
+ 
+function renderQuartersChart() {
+  const ctx=document.getElementById('chart-quarters');
+  if(!ctx) return;
+  if(chartQuarters) chartQuarters.destroy();
+  chartQuarters=new Chart(ctx,{type:'doughnut',data:{labels:QUARTERS,datasets:[{data:S.quarters.map(q=>Math.round(q)),backgroundColor:['#C9A84C','#378ADD','#4ade80','#fb923c'],borderWidth:0,hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{display:true,position:'bottom',labels:{font:{family:'Cairo',size:11},color:'#4A5568',padding:12}},tooltip:{callbacks:{label:(c)=>c.label+': '+fmt(c.raw)+' '+S.currency}}}}});
+}
+ 
+function renderSegmentsChart() {
+  const ctx=document.getElementById('chart-segments');
+  if(!ctx) return;
+  if(chartSegments) chartSegments.destroy();
+  const segs=S.segs.filter(s=>s.name&&s.pct>0);
+  if(segs.length===0){ctx.parentElement.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:180px;color:var(--text-muted);font-size:12px">أضف تقسيمات في قسم التقسيمات</div>';return;}
+  chartSegments=new Chart(ctx,{type:'pie',data:{labels:segs.map(s=>s.name),datasets:[{data:segs.map(s=>s.pct),backgroundColor:COLORS,borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'bottom',labels:{font:{family:'Cairo',size:10},color:'#4A5568'}},tooltip:{callbacks:{label:(c)=>c.label+': '+c.raw+'%'}}}}});
+}
+ 
+function renderTeamDist() {
+  const el=document.getElementById('team-dist-list');
+  if(!el) return;
+  if(!S.members.length){el.textContent='أدخل بيانات الفريق أولاً';return;}
+  const ws=S.members.map(m=>S.teamSplit==='equal'?1:+m.weight||1);
+  const total=ws.reduce((a,b)=>a+b,0)||1;
+  el.innerHTML=S.members.map((m,i)=>{
+    const pct=Math.round(ws[i]/total*100);
+    return `<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="font-weight:600">${m.name}</span><span style="color:var(--text-muted)">${fmt(m._target||0)} ${S.currency}</span></div><div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div></div>`;
+  }).join('');
+}
+ 
+function renderCommSummary() {
+  const el=document.getElementById('comm-summary-box');
+  if(!el) return;
+  if(S.csType==='tiered') el.innerHTML=`<div style="font-weight:600;font-size:13px;margin-bottom:10px;color:var(--navy)">شرائح متدرجة</div>`+S.tiers.map(t=>`<div class="sum-row"><span>${t.from}%${t.to?'-'+t.to+'%':'+'}</span><span style="font-weight:600;color:#8B6914">${t.rate}%</span></div>`).join('');
+  else if(S.csType==='flat') el.innerHTML=`<div style="font-weight:600;font-size:13px;color:var(--navy)">نسبة ثابتة: ${S.flatRate}%</div>`;
+  else el.innerHTML=`<div style="font-weight:600;font-size:13px;color:var(--navy)">بونص إنجاز عند ${S.bonusPct}%+</div>`;
+}
+ 
+function renderSummary() {
+  calcTeam();
+  document.getElementById('sum-sub').textContent=`${S.company||'شركتك'} — الخطة السنوية`;
+  const segTotal=S.segs.reduce((a,s)=>a+s.pct,0);
+  document.getElementById('summary-content').innerHTML=`
+    <div class="result-hero" style="margin-bottom:24px"><div class="result-hero-label">${S.company||'الشركة'} — التارجت السنوي</div><div class="result-hero-value">${fmt(S.annual)}</div><div class="result-hero-cur">${S.currency}</div></div>
+    <div class="kpi-row" style="margin-bottom:24px">
+      <div class="kpi-card gold"><div class="kpi-label">التارجت الشهري</div><div class="kpi-value" style="font-size:18px">${fmt(S.annual/12)}</div><div class="kpi-sub">${S.currency}</div></div>
+      <div class="kpi-card navy"><div class="kpi-label">التارجت اليومي (220 يوم)</div><div class="kpi-value" style="font-size:18px">${fmt(S.annual/220)}</div><div class="kpi-sub">${S.currency}</div></div>
+      <div class="kpi-card green"><div class="kpi-label">الفريق</div><div class="kpi-value" style="font-size:18px">${S.teamCount}</div><div class="kpi-sub">مندوب</div></div>
+      <div class="kpi-card blue"><div class="kpi-label">تارجت / مندوب / شهر</div><div class="kpi-value" style="font-size:18px">${fmt(S.annual/12/Math.max(S.teamCount,1))}</div><div class="kpi-sub">${S.currency}</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+      <div class="card" style="margin:0"><div class="card-title">الكوارترات</div>${S.quarters.map((q,i)=>`<div class="sum-row"><span><span class="badge ${QBADGE[i]}">${QUARTERS[i]}</span> ${QMONTHS[i]}</span><span style="font-weight:600">${fmt(q)} ${S.currency}</span></div>`).join('')}<div class="sum-row"><span>الإجمالي</span><span>${fmt(S.annual)} ${S.currency}</span></div></div>
+      <div class="card" style="margin:0"><div class="card-title">توزيع الفريق</div>${S.members.map(m=>`<div class="sum-row"><span>${m.name}</span><span>${fmt(m._target/12)} ${S.currency}/شهر</span></div>`).join('')}</div>
+    </div>
+    ${S.segs.length>0?`<div class="card"><div class="card-title">التقسيمات</div>${S.segs.map(s=>`<div class="sum-row"><span>${s.name||'—'}</span><span>${s.pct}% — ${fmt(S.annual*s.pct/100)} ${S.currency}</span></div>`).join('')}${Math.round(segTotal)!==100?`<div class="warn">مجموع النسب ${Math.round(segTotal)}%</div>`:''}</div>`:''}
+    <div class="card"><div class="card-title">توزيع الشهور</div><div style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px">${MONTHS.map((n,i)=>`<div style="text-align:center"><div style="font-size:10px;color:var(--text-muted);margin-bottom:4px">${n}</div><div style="font-size:13px;font-weight:600">${fmt(S.months[i])}</div></div>`).join('')}</div></div>
+    <div class="card"><div class="card-title">نظام العمولات</div>${S.csType==='tiered'?`<div style="font-size:13px;margin-bottom:8px">شرائح متدرجة:</div>`+S.tiers.map(t=>`<div class="sum-row"><span>${t.from}%${t.to?' - '+t.to+'%':'+'} من التارجت</span><span style="font-weight:600;color:#8B6914">${t.rate}% عمولة</span></div>`).join(''):S.csType==='flat'?`<div style="font-size:13px">نسبة ثابتة: <strong>${S.flatRate}%</strong></div>`:`<div style="font-size:13px">بونص إنجاز عند <strong>${S.bonusPct}%</strong>+</div>`}</div>`;
+}
+ 
+function exportPDF() {
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:'portrait',unit:'pt',format:'a4'});
+  const cur=S.currency, W=doc.internal.pageSize.getWidth();
+  doc.setFillColor(11,24,41); doc.rect(0,0,W,80,'F');
+  doc.setTextColor(201,168,76); doc.setFontSize(22); doc.setFont('helvetica','bold');
+  doc.text('Sales Target Plan',W/2,35,{align:'center'});
+  doc.setTextColor(255,255,255); doc.setFontSize(12); doc.setFont('helvetica','normal');
+  doc.text(S.company||'Company Target Plan',W/2,55,{align:'center'});
+  doc.setFontSize(10); doc.text(new Date().toLocaleDateString('ar-EG'),W/2,68,{align:'center'});
+  let y=100;
+  const addSection=(title)=>{ if(y>700){doc.addPage();y=40;} doc.setFillColor(245,237,212); doc.rect(30,y,W-60,22,'F'); doc.setTextColor(11,24,41); doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.text(title,W-40,y+15,{align:'right'}); y+=30; };
+  const addRow=(label,value)=>{ if(y>720){doc.addPage();y=40;} doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(74,85,104); doc.text(label,W-40,y,{align:'right'}); doc.setTextColor(11,24,41); doc.text(value,40,y,{align:'left'}); doc.setDrawColor(230,230,220); doc.line(30,y+4,W-30,y+4); y+=20; };
+  addSection('Annual Target - التارجت السنوي');
+  addRow('التارجت السنوي',fmt(S.annual)+' '+cur);
+  addRow('التارجت الشهري',fmt(S.annual/12)+' '+cur);
+  addRow('تارجت / مندوب / شهر',fmt(S.annual/12/Math.max(S.teamCount,1))+' '+cur);
+  addRow('حجم الفريق',S.teamCount+' مندوب'); y+=10;
+  addSection('Quarters - الكوارترات');
+  S.quarters.forEach((q,i)=>addRow(QUARTERS[i]+' ('+QMONTHS[i]+')',fmt(q)+' '+cur)); y+=10;
+  addSection('Monthly Breakdown - التوزيع الشهري');
+  MONTHS.forEach((m,i)=>addRow(m,fmt(S.months[i])+' '+cur)); y+=10;
+  if(S.members.length){addSection('Team Distribution - توزيع الفريق'); S.members.forEach(m=>addRow(m.name,fmt(m._target||0)+' '+cur+' سنوياً')); y+=10;}
+  if(S.segs.length){addSection('Segments - التقسيمات'); S.segs.forEach(s=>addRow(s.name||'—',s.pct+'% — '+fmt(S.annual*s.pct/100)+' '+cur)); y+=10;}
+  addSection('Commission System - نظام العمولات');
+  if(S.csType==='tiered') S.tiers.forEach(t=>addRow(t.from+'% - '+(t.to||'∞')+'%',t.rate+'% عمولة'));
+  else if(S.csType==='flat') addRow('نسبة ثابتة',S.flatRate+'%');
+  else addRow('بونص عند إنجاز',S.bonusPct+'%+');
+  const pages=doc.getNumberOfPages();
+  for(let p=1;p<=pages;p++){doc.setPage(p);doc.setFontSize(8);doc.setTextColor(150,150,150);doc.text('Sales Target Planner Pro — '+new Date().getFullYear(),W/2,830,{align:'center'});doc.text(p+'/'+pages,W-30,830,{align:'right'});}
+  doc.save(`target-plan-${S.company||'sales'}-${new Date().getFullYear()}.pdf`);
+}
+ 
+// INIT
+renderMethodInputs();
+setTeamCount(3);
+calcQuarters();
+calcMonths();
+updateDashboardKPIs();
+</script>
+</body>
+</html>
+ 
