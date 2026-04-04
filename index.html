@@ -304,8 +304,8 @@
 
         <!-- Summary -->
         <div id="summary" class="page">
-            <div id="print-area">
-                <div class="card" style="border: 2px solid var(--gold); text-align: center; padding: 30px;">
+            <div id="print-area" style="background: white;">
+                <div class="card" style="border: 2px solid var(--gold); text-align: center; padding: 30px; box-shadow: none;">
                     <h2 style="color: var(--navy); font-family: 'Cairo Play';">خطة المبيعات السنوية - تقرير نهائي</h2>
                     <hr style="margin: 15px 0; opacity: 0.1;">
                     <div class="kpi-grid">
@@ -315,16 +315,27 @@
                     </div>
                 </div>
                 <div class="grid-2">
-                    <div class="card">
+                    <div class="card" style="box-shadow: none; border: 1px solid #eee;">
                         <h4>تفاصيل التقسيمات</h4>
                         <div id="sum-seg-list" style="font-size: 13px;"></div>
                     </div>
-                    <div class="card">
+                    <div class="card" style="box-shadow: none; border: 1px solid #eee;">
                         <h4>نظام العمولات</h4>
                         <div id="sum-comm-desc" style="font-size: 13px;"></div>
                     </div>
                 </div>
-                <div class="card">
+                <div class="card" style="box-shadow: none; border: 1px solid #eee;">
+                    <h4>توزيع التارجت على الفريق</h4>
+                    <div class="table-container">
+                        <table style="font-size: 11px;">
+                            <thead>
+                                <tr><th>المندوب</th><th>تارجت سنوي</th><th>تارجت شهري</th></tr>
+                            </thead>
+                            <tbody id="sum-team-table"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card" style="box-shadow: none; border: 1px solid #eee;">
                     <h4>توزيع التارجت الشهري</h4>
                     <div id="sum-monthly-list" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; font-size: 12px;"></div>
                 </div>
@@ -471,6 +482,13 @@
             if (incomeEl) incomeEl.innerText = fmt(commVal + parseFloat(state.salary)) + " EGP";
         }
 
+        // تم تعديل الدالة لعدم مسح التركيز عند إدخال الاسم
+        function updateMemberName(index, name) {
+            state.team[index].name = name;
+            // لا نقوم باستدعاء updateAll هنا لتجنب إعادة رسم الجدول بالكامل أثناء الكتابة
+            localStorage.setItem('sales_expert_v2_full', JSON.stringify(state));
+        }
+
         function renderTables() {
             const fmt = (v) => Math.round(v).toLocaleString();
             
@@ -488,7 +506,7 @@
                 `).join('');
             }
 
-            // Team
+            // Team - تم تغيير oninput إلى onchange أو التعامل المباشر لمنع فقدان الفوكس
             const tBody = document.getElementById('team-table-body');
             const tSum = state.team.reduce((a,b)=>a+parseFloat(b.weight), 0) || 1;
             if (tBody) {
@@ -496,7 +514,7 @@
                     const rAnn = state.annual * r.weight/tSum;
                     return `
                     <tr>
-                        <td><input type="text" value="${r.name}" oninput="state.team[${i}].name=this.value;updateAll()"></td>
+                        <td><input type="text" value="${r.name}" onchange="updateMemberName(${i}, this.value)" onblur="updateAll()"></td>
                         <td><input type="number" value="${r.weight}" step="0.1" oninput="state.team[${i}].weight=this.value;updateAll()"></td>
                         <td>${fmt(rAnn)}</td>
                         <td style="font-weight:bold">${fmt(rAnn/12)}</td>
@@ -511,7 +529,7 @@
             if (sBody) {
                 sBody.innerHTML = state.segments.map((s, i) => `
                     <tr>
-                        <td><input type="text" value="${s.name}" oninput="state.segments[${i}].name=this.value;updateAll()"></td>
+                        <td><input type="text" value="${s.name}" oninput="state.segments[${i}].name=this.value"></td>
                         <td><input type="number" value="${s.pct}" oninput="state.segments[${i}].pct=this.value;updateAll()"></td>
                         <td style="font-weight:bold">${fmt(state.annual * s.pct/100)}</td>
                         <td><button onclick="state.segments.splice(${i},1);updateAll()" class="btn btn-danger" style="padding:4px 8px;">✕</button></td>
@@ -553,9 +571,19 @@
             // Monthly summary
             const mSum = state.mWeights.reduce((a,b)=>a+parseFloat(b), 0) || 1;
             document.getElementById('sum-monthly-list').innerHTML = MONTHS.map((m, i) => `
-                <div style="background:#f9f9f9; padding:5px; border-radius:5px;">
+                <div style="background:#f9f9f9; padding:5px; border-radius:5px; border: 1px solid #eee;">
                     <strong>${m}</strong><br>${fmt(state.annual * state.mWeights[i]/mSum)}
                 </div>
+            `).join('');
+
+            // Team table summary - NEW SECTION FOR PDF
+            const tSum = state.team.reduce((a,b)=>a+parseFloat(b.weight), 0) || 1;
+            document.getElementById('sum-team-table').innerHTML = state.team.map(r => `
+                <tr>
+                    <td>${r.name}</td>
+                    <td>${fmt(state.annual * r.weight/tSum)}</td>
+                    <td>${fmt((state.annual * r.weight/tSum)/12)}</td>
+                </tr>
             `).join('');
         }
 
@@ -601,11 +629,17 @@
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF('p', 'pt', 'a4');
             showPage('summary');
+            
             setTimeout(async () => {
                 const element = document.getElementById('print-area');
                 const canvas = await html2canvas(element, { scale: 2 });
-                doc.addImage(canvas.toDataURL('image/png'), 'PNG', 40, 40, 515, (canvas.height * 515) / canvas.width);
-                doc.save('Full-Sales-Strategy-Plan.pdf');
+                const imgData = canvas.toDataURL('image/png');
+                const imgProps = doc.getImageProperties(imgData);
+                const pdfWidth = doc.internal.pageSize.getWidth() - 40;
+                const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+                
+                doc.addImage(imgData, 'PNG', 20, 20, pdfWidth, pdfHeight);
+                doc.save('Detailed-Sales-Strategy-Plan.pdf');
             }, 500);
         }
     </script>
