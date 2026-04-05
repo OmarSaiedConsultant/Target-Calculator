@@ -283,13 +283,13 @@
         <!-- Commission -->
         <div id="commission" class="page">
             <div class="card">
-                <h3>نظام العمولات والسيناريوهات</h3>
+                <h3>نظام العمولات</h3>
                 <div class="tabs">
                     <div id="tab-flat" class="tab active" onclick="setCommMode('flat')">نسبة ثابتة</div>
                     <div id="tab-tiered" class="tab" onclick="setCommMode('tiered')">شرائح متدرجة</div>
                 </div>
                 
-                <div class="grid-3" style="margin-bottom: 25px;">
+                <div class="grid-3" style="margin-bottom: 20px;">
                     <div class="input-group">
                         <label>الراتب الأساسي الثابت</label>
                         <input type="number" id="base-salary" value="5000" onchange="state.salary=this.value;updateDashboardOnly()">
@@ -306,21 +306,22 @@
                     </div>
                 </div>
 
-                <div class="grid-3" style="background: #f8fafc; padding: 15px; border-radius: 12px; margin-bottom: 25px; border: 1px dashed #cbd5e1;">
+                <!-- خانات تعديل نسب السيناريوهات (تظهر في الشرائح فقط) -->
+                <div id="tiered-scenarios-inputs" class="grid-3" style="background: #f8fafc; padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px dashed #cbd5e1; display:none;">
                     <div class="input-group" style="margin-bottom:0">
-                        <label>نسبة التحقق (التحفظي)</label>
+                        <label>تحقق السيناريو التحفظي</label>
                         <div class="percentage-input-wrap">
                             <input type="number" step="any" id="input-scen-con" value="80" onchange="state.calcScenarios.con=this.value;updateDashboardOnly()">
                         </div>
                     </div>
                     <div class="input-group" style="margin-bottom:0">
-                        <label>نسبة التحقق (الواقعي)</label>
+                        <label>تحقق السيناريو الواقعي</label>
                         <div class="percentage-input-wrap">
                             <input type="number" step="any" id="input-scen-real" value="100" onchange="state.calcScenarios.real=this.value;updateDashboardOnly()">
                         </div>
                     </div>
                     <div class="input-group" style="margin-bottom:0">
-                        <label>نسبة التحقق (الطموح)</label>
+                        <label>تحقق السيناريو الطموح</label>
                         <div class="percentage-input-wrap">
                             <input type="number" step="any" id="input-scen-amb" value="120" onchange="state.calcScenarios.amb=this.value;updateDashboardOnly()">
                         </div>
@@ -342,20 +343,28 @@
                     </div>
                 </div>
 
+                <!-- نتيجة الدخل الإجمالي -->
                 <div class="result-hero" style="padding: 20px;">
-                    <small>سيناريوهات الدخل الإجمالي الشهري (الراتب + العمولة)</small>
-                    <div class="scenario-grid" id="income-scenarios-display">
-                        <div class="scenario-card">
-                            <h4 id="label-scen-con">سيناريو 80%</h4>
-                            <div class="val" id="income-80">0</div>
-                        </div>
-                        <div class="scenario-card" style="transform: scale(1.05); border-color: var(--gold); border-width: 2px;">
-                            <h4 id="label-scen-real">سيناريو 100%</h4>
-                            <div class="val" id="income-100">0</div>
-                        </div>
-                        <div class="scenario-card">
-                            <h4 id="label-scen-amb">سيناريو 120%</h4>
-                            <div class="val" id="income-120">0</div>
+                    <div id="flat-income-display">
+                        <small>إجمالي الدخل المتوقع للمندوب (عند تحقيق 100%)</small>
+                        <h2 id="total-income-val">0</h2>
+                    </div>
+                    
+                    <div id="tiered-income-display" style="display:none;">
+                        <small>سيناريوهات الدخل الإجمالي الشهري (الراتب + العمولة)</small>
+                        <div class="scenario-grid">
+                            <div class="scenario-card">
+                                <h4 id="label-scen-con">سيناريو 80%</h4>
+                                <div class="val" id="income-80">0</div>
+                            </div>
+                            <div class="scenario-card" style="transform: scale(1.05); border-color: var(--gold); border-width: 2px;">
+                                <h4 id="label-scen-real">سيناريو 100%</h4>
+                                <div class="val" id="income-100">0</div>
+                            </div>
+                            <div class="scenario-card">
+                                <h4 id="label-scen-amb">سيناريو 120%</h4>
+                                <div class="val" id="income-120">0</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -428,7 +437,6 @@
             const saved = localStorage.getItem('sales_expert_v2_full');
             if(saved) state = JSON.parse(saved);
             
-            // Sync initial values
             document.getElementById('base-salary').value = state.salary;
             document.getElementById('comm-rate').value = state.commRate;
             document.getElementById('method-select').value = state.method;
@@ -496,8 +504,14 @@
             state.commMode = mode;
             document.getElementById('tab-flat').classList.toggle('active', mode === 'flat');
             document.getElementById('tab-tiered').classList.toggle('active', mode === 'tiered');
+            
             document.getElementById('flat-rate-container').style.display = mode === 'flat' ? 'block' : 'none';
+            document.getElementById('flat-income-display').style.display = mode === 'flat' ? 'block' : 'none';
+            
             document.getElementById('tiered-container').style.display = mode === 'tiered' ? 'block' : 'none';
+            document.getElementById('tiered-scenarios-inputs').style.display = mode === 'tiered' ? 'grid' : 'none';
+            document.getElementById('tiered-income-display').style.display = mode === 'tiered' ? 'block' : 'none';
+            
             updateDashboardOnly();
         }
 
@@ -543,7 +557,7 @@
                 }
             }
 
-            // Scenario Labels & Calculation
+            // Calculation Logic
             const calcIncome = (achievement) => {
                 let commVal = 0;
                 const achievedSalesVal = avgRepMonthly * (achievement / 100);
@@ -556,6 +570,10 @@
                 return Math.round(commVal + parseFloat(state.salary));
             };
 
+            // Flat mode displays single 100% result
+            document.getElementById('total-income-val').innerText = fmt(calcIncome(100)) + " EGP";
+
+            // Tiered mode scenarios
             const scenarios = [
                 {id: 'con', targetId: 'income-80', labelId: 'label-scen-con'},
                 {id: 'real', targetId: 'income-100', labelId: 'label-scen-real'},
@@ -580,7 +598,6 @@
         function renderTables() {
             const fmt = (v) => Math.round(v).toLocaleString();
             
-            // Months
             const mBody = document.getElementById('m-table-body');
             const mSum = state.mWeights.reduce((a,b)=>a+parseFloat(b), 0) || 1;
             if (mBody) {
@@ -594,7 +611,6 @@
                 `).join('');
             }
 
-            // Team
             const tBody = document.getElementById('team-table-body');
             const tSum = state.team.reduce((a,b)=>a+parseFloat(b.weight), 0) || 1;
             if (tBody) {
@@ -611,7 +627,6 @@
                 `}).join('');
             }
 
-            // Segments
             const sBody = document.getElementById('seg-table-body');
             const segTotal = state.segments.reduce((a,b)=>a+parseFloat(b.pct), 0);
             if (sBody) {
@@ -627,7 +642,6 @@
                 warn.innerHTML = Math.abs(segTotal-100) > 0.1 ? `<span style="color:red">⚠️ المجموع: ${segTotal}% (يجب أن يكون 100%)</span>` : `<span style="color:green">✓ المجموع 100%</span>`;
             }
 
-            // Tiers Table
             const tierBody = document.getElementById('tiers-table-body');
             if (tierBody) {
                 tierBody.innerHTML = state.tiers.map((t, i) => `
