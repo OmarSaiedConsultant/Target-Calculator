@@ -104,17 +104,24 @@
         .tab.active { background: white; color: var(--navy); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
 
         .percentage-input-wrap { position: relative; width: 100%; }
+        .percentage-input-wrap input { padding-left: 25px; }
         .percentage-input-wrap::before { 
             content: '%'; 
             position: absolute; 
-            left: 12px; 
+            left: 10px; 
             top: 50%; 
             transform: translateY(-50%); 
             color: var(--text-muted); 
             font-weight: 700; 
             pointer-events: none; 
             font-size: 14px;
+            z-index: 1;
         }
+
+        .scenario-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 15px; }
+        .scenario-card { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; border: 1px solid rgba(201,168,76,0.3); }
+        .scenario-card h4 { font-size: 12px; margin-bottom: 5px; color: var(--gold-light); }
+        .scenario-card .val { font-size: 18px; font-weight: 700; color: white; }
 
         @media (max-width: 992px) {
             .sidebar { width: 70px; }
@@ -289,7 +296,7 @@
                 <div class="grid-3">
                     <div class="input-group">
                         <label>الراتب الأساسي الثابت للمندوب</label>
-                        <input type="number" id="base-salary" value="5000" oninput="state.salary=this.value;updateAll()">
+                        <input type="number" id="base-salary" value="5000" oninput="state.salary=this.value;updateDashboardOnly()">
                     </div>
                     <div class="input-group">
                         <label>متوسط التارجت الشهري للمندوب</label>
@@ -298,7 +305,7 @@
                     <div id="flat-rate-container" class="input-group">
                         <label>نسبة العمولة (%)</label>
                         <div class="percentage-input-wrap">
-                            <input type="number" step="any" id="comm-rate" value="3" oninput="state.commRate=this.value;updateAll()">
+                            <input type="number" step="any" id="comm-rate" value="3" oninput="state.commRate=this.value;updateDashboardOnly()">
                         </div>
                     </div>
                 </div>
@@ -318,10 +325,22 @@
                     </div>
                 </div>
 
-                <div class="result-hero">
-                    <small>إجمالي الدخل المتوقع للمندوب (عند تحقيق 100% من هدفه)</small>
-                    <h2 id="total-income-val">0</h2>
-                    <small style="opacity:0.6">يشمل الراتب الثابت + العمولة المحسوبة بناءً على التارجت الشهري المتوسط</small>
+                <div class="result-hero" style="padding: 20px;">
+                    <small>سيناريوهات الدخل الإجمالي المتوقع (الراتب + العمولة)</small>
+                    <div class="scenario-grid">
+                        <div class="scenario-card">
+                            <h4>سيناريو تحفظي (80%)</h4>
+                            <div class="val" id="income-80">0</div>
+                        </div>
+                        <div class="scenario-card" style="transform: scale(1.05); border-width: 2px;">
+                            <h4>سيناريو واقعي (100%)</h4>
+                            <div class="val" id="income-100">0</div>
+                        </div>
+                        <div class="scenario-card">
+                            <h4>سيناريو طموح (120%)</h4>
+                            <div class="val" id="income-120">0</div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -459,7 +478,8 @@
             updateAll();
         }
 
-        function updateAll() {
+        // دالة تحديث الحسابات والداشبورد فقط دون إعادة رسم الجداول لمنع فقدان الفوكس
+        function updateDashboardOnly() {
             const f = state.forecast;
             if(state.method === 'growth') state.baseAnnual = f.last * (1 + f.rate/100);
             else if(state.method === 'pipeline') state.baseAnnual = f.deal * (f.deals || 100) * (f.close/100) * 12;
@@ -467,10 +487,13 @@
             else state.baseAnnual = parseFloat(f.manual) || 0;
 
             state.annual = state.baseAnnual * state.multiplier;
-            
-            renderTables();
             updateDashboard();
             localStorage.setItem('sales_expert_v2_full', JSON.stringify(state));
+        }
+
+        function updateAll() {
+            updateDashboardOnly();
+            renderTables();
         }
 
         function updateDashboard() {
@@ -499,48 +522,54 @@
                 }
             }
 
-            // Commission Simulation
-            let commVal = 0;
-            if(state.commMode === 'flat') {
-                commVal = avgRepMonthly * (state.commRate / 100);
-            } else {
-                const tier = state.tiers.find(t => 100 >= t.from && 100 <= t.to);
-                if(tier) commVal = avgRepMonthly * (tier.rate / 100);
-            }
-            const incomeEl = document.getElementById('total-income-val');
-            if (incomeEl) incomeEl.innerText = fmt(commVal + parseFloat(state.salary)) + " EGP";
+            // Calculation Scenarios
+            const calcIncome = (achievement) => {
+                let commVal = 0;
+                const achievedVal = avgRepMonthly * (achievement / 100);
+                if(state.commMode === 'flat') {
+                    commVal = achievedVal * (state.commRate / 100);
+                } else {
+                    const tier = state.tiers.find(t => achievement >= t.from && achievement <= t.to);
+                    if(tier) commVal = achievedVal * (tier.rate / 100);
+                }
+                return Math.round(commVal + parseFloat(state.salary));
+            };
+
+            const inc80 = document.getElementById('income-80');
+            const inc100 = document.getElementById('income-100');
+            const inc120 = document.getElementById('income-120');
+            
+            if (inc80) inc80.innerText = fmt(calcIncome(80)) + " EGP";
+            if (inc100) inc100.innerText = fmt(calcIncome(100)) + " EGP";
+            if (inc120) inc120.innerText = fmt(calcIncome(120)) + " EGP";
         }
 
-        // تحسين حفظ الأسماء دون إعادة رسم
         function updateMemberName(index, name) {
             state.team[index].name = name;
             localStorage.setItem('sales_expert_v2_full', JSON.stringify(state));
         }
 
-        // تحديث بيانات الشرائح مع دعم الكسور
         function updateTierData(index, field, value) {
             state.tiers[index][field] = parseFloat(value) || 0;
-            localStorage.setItem('sales_expert_v2_full', JSON.stringify(state));
+            updateDashboardOnly();
         }
 
         function renderTables() {
             const fmt = (v) => Math.round(v).toLocaleString();
             
-            // Months
             const mBody = document.getElementById('m-table-body');
             const mSum = state.mWeights.reduce((a,b)=>a+parseFloat(b), 0) || 1;
             if (mBody) {
                 mBody.innerHTML = MONTHS.map((m, i) => `
                     <tr>
                         <td>${m}</td>
-                        <td><input type="number" step="any" value="${state.mWeights[i]}" oninput="state.mWeights[${i}]=this.value;updateAll()"></td>
+                        <td><input type="number" step="any" value="${state.mWeights[i]}" oninput="state.mWeights[${i}]=this.value;updateDashboardOnly()"></td>
                         <td style="font-weight:bold">${fmt(state.annual * state.mWeights[i]/mSum)}</td>
                         <td><span class="badge" style="background:#eee">${((state.mWeights[i]/mSum)*100).toFixed(1)}%</span></td>
                     </tr>
                 `).join('');
             }
 
-            // Team
             const tBody = document.getElementById('team-table-body');
             const tSum = state.team.reduce((a,b)=>a+parseFloat(b.weight), 0) || 1;
             if (tBody) {
@@ -548,8 +577,8 @@
                     const rAnn = state.annual * r.weight/tSum;
                     return `
                     <tr>
-                        <td><input type="text" value="${r.name}" onchange="updateMemberName(${i}, this.value)" onblur="updateAll()"></td>
-                        <td><input type="number" step="any" value="${r.weight}" oninput="state.team[${i}].weight=this.value;updateAll()"></td>
+                        <td><input type="text" value="${r.name}" onchange="updateMemberName(${i}, this.value)" onblur="updateDashboardOnly()"></td>
+                        <td><input type="number" step="any" value="${r.weight}" oninput="state.team[${i}].weight=this.value;updateDashboardOnly()"></td>
                         <td>${fmt(rAnn)}</td>
                         <td style="font-weight:bold">${fmt(rAnn/12)}</td>
                         <td><button onclick="state.team.splice(${i},1);updateAll()" class="btn btn-danger" style="padding:4px 8px;">✕</button></td>
@@ -557,14 +586,13 @@
                 `}).join('');
             }
 
-            // Segments
             const sBody = document.getElementById('seg-table-body');
             const segTotal = state.segments.reduce((a,b)=>a+parseFloat(b.pct), 0);
             if (sBody) {
                 sBody.innerHTML = state.segments.map((s, i) => `
                     <tr>
                         <td><input type="text" value="${s.name}" oninput="state.segments[${i}].name=this.value"></td>
-                        <td><input type="number" step="any" value="${s.pct}" oninput="state.segments[${i}].pct=this.value;updateAll()"></td>
+                        <td><input type="number" step="any" value="${s.pct}" oninput="state.segments[${i}].pct=this.value;updateDashboardOnly()"></td>
                         <td style="font-weight:bold">${fmt(state.annual * s.pct/100)}</td>
                         <td><button onclick="state.segments.splice(${i},1);updateAll()" class="btn btn-danger" style="padding:4px 8px;">✕</button></td>
                     </tr>
@@ -573,14 +601,13 @@
                 warn.innerHTML = Math.abs(segTotal-100) > 0.1 ? `<span style="color:red">⚠️ المجموع: ${segTotal}% (يجب أن يكون 100%)</span>` : `<span style="color:green">✓ المجموع 100%</span>`;
             }
 
-            // Tiers - تم استخدام step="any" لدعم الكسور 
             const tierBody = document.getElementById('tiers-table-body');
             if (tierBody) {
                 tierBody.innerHTML = state.tiers.map((t, i) => `
                     <tr>
-                        <td><div class="percentage-input-wrap"><input type="number" step="any" value="${t.from}" onchange="updateTierData(${i}, 'from', this.value)" onblur="updateAll()"></div></td>
-                        <td><div class="percentage-input-wrap"><input type="number" step="any" value="${t.to}" onchange="updateTierData(${i}, 'to', this.value)" onblur="updateAll()"></div></td>
-                        <td><div class="percentage-input-wrap"><input type="number" step="any" value="${t.rate}" onchange="updateTierData(${i}, 'rate', this.value)" onblur="updateAll()"></div></td>
+                        <td><div class="percentage-input-wrap"><input type="number" step="any" value="${t.from}" oninput="updateTierData(${i}, 'from', this.value)"></div></td>
+                        <td><div class="percentage-input-wrap"><input type="number" step="any" value="${t.to}" oninput="updateTierData(${i}, 'to', this.value)"></div></td>
+                        <td><div class="percentage-input-wrap"><input type="number" step="any" value="${t.rate}" oninput="updateTierData(${i}, 'rate', this.value)"></div></td>
                         <td><button onclick="state.tiers.splice(${i},1);updateAll()" class="btn btn-danger" style="padding:4px 8px;">✕</button></td>
                     </tr>
                 `).join('');
@@ -600,7 +627,7 @@
             else {
                 commTxt += `العمولة: شرائح متدرجة (`;
                 state.tiers.forEach((t, idx) => {
-                    commTxt += `${t.from}-${t.to}% لتحقيق ${t.rate}% عمولة${idx < state.tiers.length - 1 ? '، ' : ''}`;
+                    commTxt += `${t.from}-${t.to}% تحقيق -> ${t.rate}% عمولة${idx < state.tiers.length - 1 ? '، ' : ''}`;
                 });
                 commTxt += `)`;
             }
