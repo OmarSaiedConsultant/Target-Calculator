@@ -85,9 +85,9 @@
         .btn-danger { background: #fee2e2; color: #dc2626; }
 
         .table-container { overflow-x: auto; margin-top: 15px; border-radius: 12px; border: 1px solid #edf2f7; }
-        table { width: 100%; border-collapse: collapse; }
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
         th { background: #F7FAFC; padding: 12px; text-align: right; font-size: 12px; color: var(--text-muted); }
-        td { padding: 12px; border-bottom: 1px solid #edf2f7; font-size: 14px; }
+        td { padding: 12px; border-bottom: 1px solid #edf2f7; font-size: 14px; overflow: visible; }
 
         .scenario-box { display: flex; gap: 8px; margin-bottom: 20px; }
         .scenario-btn { flex: 1; padding: 10px; border-radius: 10px; border: 1.5px solid #ddd; text-align: center; cursor: pointer; font-size: 12px; font-weight: 600; background: white; }
@@ -336,7 +336,12 @@
                     <div class="table-container">
                         <table>
                             <thead>
-                                <tr><th>من % تحقيق</th><th>إلى % تحقيق</th><th>نسبة العمولة (%)</th><th>حذف</th></tr>
+                                <tr>
+                                    <th style="width:25%">من % تحقيق</th>
+                                    <th style="width:25%">إلى % تحقيق</th>
+                                    <th style="width:35%">نسبة العمولة (%)</th>
+                                    <th style="width:15%">حذف</th>
+                                </tr>
                             </thead>
                             <tbody id="tiers-table-body"></tbody>
                         </table>
@@ -355,15 +360,15 @@
                         <div class="scenario-grid">
                             <div class="scenario-card">
                                 <h4 id="label-scen-con">سيناريو 80%</h4>
-                                <div class="val" id="income-80">0</div>
+                                <div class="val" id="income-con">0</div>
                             </div>
                             <div class="scenario-card" style="transform: scale(1.05); border-color: var(--gold); border-width: 2px;">
                                 <h4 id="label-scen-real">سيناريو 100%</h4>
-                                <div class="val" id="income-100">0</div>
+                                <div class="val" id="income-real">0</div>
                             </div>
                             <div class="scenario-card">
                                 <h4 id="label-scen-amb">سيناريو 120%</h4>
-                                <div class="val" id="income-120">0</div>
+                                <div class="val" id="income-amb">0</div>
                             </div>
                         </div>
                     </div>
@@ -436,10 +441,9 @@
         let chartM, chartT;
 
         window.onload = () => {
-            const saved = localStorage.getItem('sales_expert_v3_final');
+            const saved = localStorage.getItem('sales_expert_v3_final_fixed');
             if(saved) {
                 const parsed = JSON.parse(saved);
-                // Deep merge to ensure new properties exist
                 state = { ...DEFAULT_STATE, ...parsed };
                 state.forecast = { ...DEFAULT_STATE.forecast, ...parsed.forecast };
                 state.calcScenarios = { ...DEFAULT_STATE.calcScenarios, ...parsed.calcScenarios };
@@ -525,14 +529,16 @@
 
         function updateDashboardOnly() {
             const f = state.forecast;
-            if(state.method === 'growth') state.baseAnnual = parseFloat(f.last) * (1 + parseFloat(f.rate)/100);
-            else if(state.method === 'pipeline') state.baseAnnual = parseFloat(f.deal) * (parseFloat(f.deals) || 100) * (parseFloat(f.close)/100) * 12;
-            else if(state.method === 'market') state.baseAnnual = parseFloat(f.market) * (parseFloat(f.share)/100);
-            else state.baseAnnual = parseFloat(f.manual) || 0;
+            let base = 0;
+            if(state.method === 'growth') base = (parseFloat(f.last) || 0) * (1 + (parseFloat(f.rate) || 0)/100);
+            else if(state.method === 'pipeline') base = (parseFloat(f.deal) || 0) * (parseFloat(f.deals) || 100) * ((parseFloat(f.close) || 0)/100) * 12;
+            else if(state.method === 'market') base = (parseFloat(f.market) || 0) * ((parseFloat(f.share) || 0)/100);
+            else base = parseFloat(f.manual) || 0;
 
-            state.annual = (state.baseAnnual || 0) * state.multiplier;
+            state.baseAnnual = base;
+            state.annual = base * state.multiplier;
             updateDashboard();
-            localStorage.setItem('sales_expert_v3_final', JSON.stringify(state));
+            localStorage.setItem('sales_expert_v3_final_fixed', JSON.stringify(state));
         }
 
         function updateAll() {
@@ -542,7 +548,7 @@
 
         function updateDashboard() {
             const fmt = (v) => Math.round(v).toLocaleString();
-            const confidence = state.method === 'pipeline' ? Math.min(parseFloat(state.forecast.close) * 2, 95) : 75;
+            const confidence = state.method === 'pipeline' ? Math.min((parseFloat(state.forecast.close) || 0) * 2, 95) : 75;
             const deals = Math.round(state.annual / (parseFloat(state.forecast.deal) || 10000));
             const avgRepMonthly = (state.annual/12)/(state.team.length||1);
 
@@ -551,7 +557,7 @@
                 'dash-monthly': fmt(state.annual / 12),
                 'dash-team': state.team.length,
                 'dash-deals': deals,
-                'dash-confidence': (isNaN(confidence) ? 0 : confidence) + '%',
+                'dash-confidence': Math.round(confidence) + '%',
                 'calc-res-target': fmt(state.annual),
                 'side-total': fmt(state.annual),
                 'comm-rep-target-display': fmt(avgRepMonthly) + " EGP"
@@ -565,33 +571,36 @@
                 }
             }
 
-            // Calculation Logic
-            const calcIncome = (achievement) => {
+            // Calculation Logic for Scenarios
+            const calcIncome = (achievementPct) => {
+                const pct = parseFloat(achievementPct) || 0;
                 let commVal = 0;
-                const achievedSalesVal = avgRepMonthly * (parseFloat(achievement) / 100);
+                const achievedSalesVal = avgRepMonthly * (pct / 100);
+                
                 if(state.commMode === 'flat') {
-                    commVal = achievedSalesVal * (parseFloat(state.commRate) / 100);
+                    commVal = achievedSalesVal * ((parseFloat(state.commRate) || 0) / 100);
                 } else {
-                    const tier = state.tiers.find(t => parseFloat(achievement) >= t.from && parseFloat(achievement) <= t.to);
-                    if(tier) commVal = achievedSalesVal * (parseFloat(tier.rate) / 100);
+                    const tier = state.tiers.find(t => pct >= parseFloat(t.from) && pct <= parseFloat(t.to));
+                    if(tier) commVal = achievedSalesVal * ((parseFloat(tier.rate) || 0) / 100);
                 }
-                const total = Math.round(commVal + parseFloat(state.salary));
+                
+                const total = Math.round(commVal + (parseFloat(state.salary) || 0));
                 return isNaN(total) ? 0 : total;
             };
 
-            // Flat mode displays single 100% result
-            const totalFlat = document.getElementById('total-income-val');
-            if(totalFlat) totalFlat.innerText = fmt(calcIncome(100)) + " EGP";
+            // Flat mode
+            const flatIncomeEl = document.getElementById('total-income-val');
+            if(flatIncomeEl) flatIncomeEl.innerText = fmt(calcIncome(100)) + " EGP";
 
             // Tiered mode scenarios
             const scenarios = [
-                {id: 'con', targetId: 'income-80', labelId: 'label-scen-con'},
-                {id: 'real', targetId: 'income-100', labelId: 'label-scen-real'},
-                {id: 'amb', targetId: 'income-120', labelId: 'label-scen-amb'}
+                {key: 'con', targetId: 'income-con', labelId: 'label-scen-con'},
+                {key: 'real', targetId: 'income-real', labelId: 'label-scen-real'},
+                {key: 'amb', targetId: 'income-amb', labelId: 'label-scen-amb'}
             ];
 
             scenarios.forEach(sc => {
-                const pct = state.calcScenarios[sc.id] || 0;
+                const pct = parseFloat(state.calcScenarios[sc.key]) || 0;
                 const incomeVal = calcIncome(pct);
                 const elLabel = document.getElementById(sc.labelId);
                 const elVal = document.getElementById(sc.targetId);
@@ -601,13 +610,14 @@
         }
 
         function updateTierData(index, field, value) {
-            state.tiers[index][field] = parseFloat(value) || 0;
+            state.tiers[index][field] = value; // Keep as text to allow "." during typing
             updateDashboardOnly();
         }
 
         function renderTables() {
             const fmt = (v) => Math.round(v).toLocaleString();
             
+            // Months
             const mBody = document.getElementById('m-table-body');
             const mSum = state.mWeights.reduce((a,b)=>a+parseFloat(b), 0) || 1;
             if (mBody) {
@@ -615,17 +625,19 @@
                     <tr>
                         <td>${m}</td>
                         <td><input type="text" inputmode="decimal" value="${state.mWeights[i]}" onchange="state.mWeights[${i}]=this.value;updateDashboardOnly()"></td>
-                        <td style="font-weight:bold">${fmt(state.annual * state.mWeights[i]/mSum)}</td>
-                        <td><span class="badge" style="background:#eee">${((state.mWeights[i]/mSum)*100).toFixed(1)}%</span></td>
+                        <td style="font-weight:bold">${fmt(state.annual * parseFloat(state.mWeights[i]||0)/mSum)}</td>
+                        <td><span class="badge" style="background:#eee">${((parseFloat(state.mWeights[i]||0)/mSum)*100).toFixed(1)}%</span></td>
                     </tr>
                 `).join('');
             }
 
+            // Team
             const tBody = document.getElementById('team-table-body');
             const tSum = state.team.reduce((a,b)=>a+parseFloat(b.weight), 0) || 1;
             if (tBody) {
                 tBody.innerHTML = state.team.map((r, i) => {
-                    const rAnn = state.annual * (parseFloat(r.weight)/tSum);
+                    const weight = parseFloat(r.weight) || 0;
+                    const rAnn = state.annual * (weight/tSum);
                     return `
                     <tr>
                         <td><input type="text" value="${r.name}" onchange="state.team[${i}].name=this.value;updateDashboardOnly()"></td>
@@ -637,21 +649,23 @@
                 `}).join('');
             }
 
+            // Segments
             const sBody = document.getElementById('seg-table-body');
-            const segTotal = state.segments.reduce((a,b)=>a+parseFloat(b.pct), 0);
+            const segTotal = state.segments.reduce((a,b)=>a+parseFloat(b.pct||0), 0);
             if (sBody) {
                 sBody.innerHTML = state.segments.map((s, i) => `
                     <tr>
                         <td><input type="text" value="${s.name}" onchange="state.segments[${i}].name=this.value;updateDashboardOnly()"></td>
                         <td><input type="text" inputmode="decimal" value="${s.pct}" onchange="state.segments[${i}].pct=this.value;updateDashboardOnly()"></td>
-                        <td style="font-weight:bold">${fmt(state.annual * (parseFloat(s.pct)/100))}</td>
+                        <td style="font-weight:bold">${fmt(state.annual * (parseFloat(s.pct||0)/100))}</td>
                         <td><button onclick="state.segments.splice(${i},1);updateAll()" class="btn btn-danger" style="padding:4px 8px;">✕</button></td>
                     </tr>
                 `).join('');
                 const warn = document.getElementById('seg-total-warn');
-                warn.innerHTML = Math.abs(segTotal-100) > 0.1 ? `<span style="color:red">⚠️ المجموع: ${segTotal}% (يجب أن يكون 100%)</span>` : `<span style="color:green">✓ المجموع 100%</span>`;
+                warn.innerHTML = Math.abs(segTotal-100) > 0.1 ? `<span style="color:red">⚠️ المجموع: ${segTotal.toFixed(1)}% (يجب أن يكون 100%)</span>` : `<span style="color:green">✓ المجموع 100%</span>`;
             }
 
+            // Tiers Table - Fixed columns
             const tierBody = document.getElementById('tiers-table-body');
             if (tierBody) {
                 tierBody.innerHTML = state.tiers.map((t, i) => `
@@ -671,9 +685,9 @@
             document.getElementById('sum-team').innerText = state.team.length;
             document.getElementById('sum-rep').innerText = fmt((state.annual/12)/(state.team.length||1)) + " EGP";
 
-            document.getElementById('sum-seg-list').innerHTML = state.segments.map(s => `<div>${s.name}: <strong>${s.pct}%</strong> (${fmt(state.annual*parseFloat(s.pct)/100)} EGP)</div>`).join('');
+            document.getElementById('sum-seg-list').innerHTML = state.segments.map(s => `<div>${s.name}: <strong>${parseFloat(s.pct||0)}%</strong> (${fmt(state.annual*parseFloat(s.pct||0)/100)} EGP)</div>`).join('');
 
-            let commTxt = `الراتب الثابت: ${fmt(state.salary)} EGP | `;
+            let commTxt = `الراتب الثابت: ${fmt(parseFloat(state.salary)||0)} EGP | `;
             if(state.commMode === 'flat') commTxt += `العمولة: نسبة ثابتة ${state.commRate}%`;
             else {
                 commTxt += `العمولة: شرائح متدرجة (`;
@@ -687,13 +701,13 @@
             const mSum = state.mWeights.reduce((a,b)=>a+parseFloat(b), 0) || 1;
             document.getElementById('sum-monthly-list').innerHTML = MONTHS.map((m, i) => `
                 <div style="background:#f9f9f9; padding:5px; border-radius:5px; border: 1px solid #eee;">
-                    <strong>${m}</strong><br>${fmt(state.annual * parseFloat(state.mWeights[i])/mSum)}
+                    <strong>${m}</strong><br>${fmt(state.annual * parseFloat(state.mWeights[i]||0)/mSum)}
                 </div>
             `).join('');
 
             const tSum = state.team.reduce((a,b)=>a+parseFloat(b.weight), 0) || 1;
             document.getElementById('sum-team-table').innerHTML = state.team.map(r => {
-                const rAnn = state.annual * (parseFloat(r.weight)/tSum);
+                const rAnn = state.annual * (parseFloat(r.weight||0)/tSum);
                 return `
                 <tr>
                     <td>${r.name}</td>
@@ -713,13 +727,13 @@
             const mSum = state.mWeights.reduce((a,b)=>a+parseFloat(b), 0) || 1;
             chartM = new Chart(ctxM.getContext('2d'), {
                 type: 'line',
-                data: { labels: MONTHS, datasets: [{ label: 'التارجت', data: state.mWeights.map(w => state.annual * parseFloat(w)/mSum), borderColor: '#C9A84C', tension: 0.4, fill: true, backgroundColor: 'rgba(201,168,76,0.1)' }] },
+                data: { labels: MONTHS, datasets: [{ label: 'التارجت', data: state.mWeights.map(w => state.annual * parseFloat(w||0)/mSum), borderColor: '#C9A84C', tension: 0.4, fill: true, backgroundColor: 'rgba(201,168,76,0.1)' }] },
                 options: { maintainAspectRatio: false }
             });
 
             chartT = new Chart(ctxT.getContext('2d'), {
                 type: 'pie',
-                data: { labels: state.team.map(r=>r.name), datasets: [{ data: state.team.map(r=>parseFloat(r.weight)), backgroundColor: ['#0B1829','#C9A84C','#1E3550','#E2C47A','#4A5568'] }] },
+                data: { labels: state.team.map(r=>r.name), datasets: [{ data: state.team.map(r=>parseFloat(r.weight||0)), backgroundColor: ['#0B1829','#C9A84C','#1E3550','#E2C47A','#4A5568'] }] },
                 options: { maintainAspectRatio: false }
             });
         }
@@ -729,10 +743,10 @@
         function addTier() { state.tiers.push({from:0, to:0, rate:0}); updateAll(); }
 
         function exportCSV() {
-            let csv = "\uFEFF"; // BOM for Arabic
+            let csv = "\uFEFF"; 
             csv += "الشهر,التارجت المستهدف\n";
             const mSum = state.mWeights.reduce((a,b)=>a+parseFloat(b), 0) || 1;
-            MONTHS.forEach((m, i) => { csv += `${m},${Math.round(state.annual * parseFloat(state.mWeights[i])/mSum)}\n`; });
+            MONTHS.forEach((m, i) => { csv += `${m},${Math.round(state.annual * parseFloat(state.mWeights[i]||0)/mSum)}\n`; });
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
