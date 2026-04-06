@@ -253,7 +253,7 @@
                 <div class="table-container">
                     <table>
                         <thead>
-                            <tr><th>الاسم</th><th style="width: 120px;">الوزن البيعي</th><th>تارجت سنوي</th><th>تارجت شهري</th><th>حذف</th></tr>
+                            <tr><th>الاسم</th><th style="width: 120px;">الوزن البيعي</th><th>تارجت السنوي</th><th>تارجت الشهري</th><th>حذف</th></tr>
                         </thead>
                         <tbody id="team-table-body"></tbody>
                     </table>
@@ -436,6 +436,9 @@
         const MONTHS = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
         let chartM, chartT;
 
+        // دالة التنسيق الموحدة
+        const fmt = (v) => Math.round(v || 0).toLocaleString();
+
         window.onload = () => {
             const saved = localStorage.getItem('sales_expert_final_v4');
             if(saved) {
@@ -446,7 +449,6 @@
             }
             syncUIInputs();
             renderAllPages();
-            updateDashboardDOM();
         };
 
         function syncUIInputs() {
@@ -475,7 +477,7 @@
         function setScenario(mult, el) {
             state.multiplier = mult;
             document.querySelectorAll('#forecast .scenario-btn').forEach(b => b.classList.remove('active'));
-            el.classList.add('active');
+            if(el) el.classList.add('active');
             liveFullUpdate();
         }
 
@@ -524,7 +526,6 @@
             liveFullUpdate();
         }
 
-        // دالة التحديث اللحظي الشاملة لجميع الحسابات
         function liveFullUpdate() {
             const f = state.forecast;
             let base = 0;
@@ -537,13 +538,11 @@
             state.annual = base * state.multiplier;
             
             updateDashboardDOM();
-            updateCalculatedCells(); // تحديث أرقام الجداول بدون ريندر كامل
+            updateCalculatedCells(); 
             localStorage.setItem('sales_expert_final_v4', JSON.stringify(state));
         }
 
-        // تحديث الداشبورد والملخص في الـ DOM مباشرة
         function updateDashboardDOM() {
-            const fmt = (v) => Math.round(v || 0).toLocaleString();
             const confidence = state.method === 'pipeline' ? Math.min((parseFloat(state.forecast.close) || 0) * 2, 95) : 75;
             const deals = Math.round(state.annual / (parseFloat(state.forecast.deal) || 10000));
             const avgRepMonthly = (state.annual/12)/(state.team.length||1);
@@ -561,14 +560,15 @@
 
             for (const [id, val] of Object.entries(map)) {
                 const el = document.getElementById(id);
-                if (el) el.innerText = val;
+                if (el) {
+                    if (el.tagName === 'INPUT') el.value = val;
+                    else el.innerText = val;
+                }
             }
             liveCalcCommission();
         }
 
-        // حساب العمولات لحظياً
         function liveCalcCommission() {
-            const fmt = (v) => Math.round(v || 0).toLocaleString();
             const avgRepMonthly = (state.annual/12)/(state.team.length||1);
             
             const calc = (achievementPct) => {
@@ -594,16 +594,12 @@
                     const pct = state.calcScenarios[key];
                     el.innerText = fmt(calc(pct)) + " EGP";
                     const label = document.getElementById(`label-scen-${key}`);
-                    if(label) label.innerText = `سيناريو تحقيق ${pct}%`;
+                    if(label) label.innerText = `تحقق ${pct}%`;
                 }
             }
         }
 
-        // تحديث الخلايا المحسوبة داخل الجداول دون إعادة رسم الـ HTML (للحفاظ على الفوكس)
         function updateCalculatedCells() {
-            const fmt = (v) => Math.round(v || 0).toLocaleString();
-            
-            // تحديث جدول الشهور
             const mSum = state.mWeights.reduce((a,b)=>a+parseFloat(b), 0) || 1;
             MONTHS.forEach((_, i) => {
                 const targetCell = document.getElementById(`m-target-${i}`);
@@ -612,7 +608,6 @@
                 if(pctCell) pctCell.innerText = (((parseFloat(state.mWeights[i]) || 0) / mSum) * 100).toFixed(1) + '%';
             });
 
-            // تحديث جدول الفريق
             const tSum = state.team.reduce((a,b)=>a+parseFloat(b.weight), 0) || 1;
             state.team.forEach((r, i) => {
                 const annualCell = document.getElementById(`t-annual-${i}`);
@@ -621,7 +616,6 @@
                 if(monthlyCell) monthlyCell.innerText = fmt((state.annual * (parseFloat(r.weight) || 0) / tSum) / 12);
             });
 
-            // تحديث جدول التقسيمات
             const segTotal = state.segments.reduce((a,b)=>a+parseFloat(b.pct||0), 0);
             state.segments.forEach((s, i) => {
                 const valCell = document.getElementById(`seg-val-${i}`);
@@ -637,7 +631,6 @@
         }
 
         function renderTables() {
-            const fmt = (v) => Math.round(v || 0).toLocaleString();
             const mSum = state.mWeights.reduce((a,b)=>a+parseFloat(b), 0) || 1;
             
             // Months Table
@@ -696,7 +689,6 @@
         }
 
         function renderSummary() {
-            const fmt = (v) => Math.round(v || 0).toLocaleString();
             document.getElementById('sum-annual').innerText = fmt(state.annual) + " EGP";
             document.getElementById('sum-team').innerText = state.team.length;
             document.getElementById('sum-rep').innerText = fmt((state.annual/12)/(state.team.length||1)) + " EGP";
